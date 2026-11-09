@@ -12,6 +12,10 @@
   <br>
 </p>
 
+## Architecture
+
+See the [architecture and contributor guide](ARCHITECTURE.md) for the project structure, data flows, and development workflows.
+
 ## Local Development
 
 | Command       | Description                                      |
