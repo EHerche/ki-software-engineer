@@ -1,4 +1,4 @@
 interface:
   display_name: 'Requirements Interview'
-  short_description: 'Turn rough ideas into stories and acceptance criteria'
-  default_prompt: 'Use $requirements-interview to interview me one step at a time about my feature idea, then draft a user story, Given/When/Then acceptance criteria, and technical notes.'
+  short_description: 'Plan features and publish approved stories to GitHub'
+  default_prompt: 'Use $requirements-interview to interview me one step at a time about my feature idea, draft a user story with Given/When/Then acceptance criteria and technical notes, and publish it as a GitHub issue after my final approval.'

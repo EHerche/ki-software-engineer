@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Finalize Requirements'
+  short_description: 'Verify delivery and close the GitHub issue'
+  default_prompt: 'Use $finalize-requirements to verify the implemented acceptance criteria, run tests and build, update the GitHub issue, and close it when delivery is confirmed.'
+policy:
+  allow_implicit_invocation: true
