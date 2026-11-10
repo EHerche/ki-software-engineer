@@ -1,43 +1,4 @@
-import { expect, test } from '@playwright/test';
-import type { Book } from '../src/app/books/book';
-
-const apiUrl = 'http://localhost:4730/books';
-const firstBook: Book = {
-  id: 'first-book',
-  isbn: '9781234567890',
-  title: 'Angular in Practice',
-  subtitle: 'Building useful applications',
-  author: 'Ada Reader',
-  publisher: 'Example Press',
-  numPages: 320,
-  price: 'EUR 29.95',
-  cover: 'http://localhost:4730/covers/first.svg',
-  abstract: 'A complete introduction to application development.\nThe final paragraph must also be displayed.',
-  userId: 1
-};
-const secondBook: Book = { ...firstBook, id: 'second-book', title: 'Practical TypeScript', isbn: '9781234567891' };
-
-test.use({ baseURL: 'http://localhost:4200' });
-
-test.beforeEach(async ({ page }) => {
-  await page.route('https://fonts.googleapis.com/**', route => route.abort());
-  await page.route('https://fonts.gstatic.com/**', route => route.abort());
-  await page.route(`${apiUrl}?*`, route => {
-    const query = new URL(route.request().url()).searchParams.get('q')?.toLowerCase() ?? '';
-    return route.fulfill({ json: [firstBook, secondBook].filter(book => book.title.toLowerCase().includes(query)) });
-  });
-  await page.route(`${apiUrl}/*`, route => {
-    const id = decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()!);
-    const book = [firstBook, secondBook].find(candidate => candidate.id === id);
-    return route.fulfill({ status: book ? 200 : 404, json: book ?? {} });
-  });
-  await page.route('http://localhost:4730/covers/**', route =>
-    route.fulfill({
-      contentType: 'image/svg+xml',
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#dbeafe"/></svg>'
-    })
-  );
-});
+import { apiUrl, expect, firstBook, secondBook, test } from './fixtures/books';
 
 test('searches the collection, opens details by keyboard, and returns to the collection', async ({ page }) => {
   await page.goto('/');
