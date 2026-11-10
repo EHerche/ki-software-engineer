@@ -1,15 +1,37 @@
-<header class="bg-white shadow">
-  <div class="container mx-auto px-4 py-6">
-    <h1 class="text-3xl font-bold text-blue-600">BookMonkey</h1>
+<header class="site-header">
+  <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 5v15M3 4c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2Z" />
+        </svg>
+      </span>
+      <span class="brand-name">BookMonkey</span>
+    </div>
+    <button
+      type="button"
+      class="theme-switch"
+      role="switch"
+      aria-label="Dark mode"
+      [attr.aria-checked]="theme.isDark"
+      (click)="theme.toggle()"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        @if (theme.isDark) {
+          <path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z" />
+        } @else {
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" />
+        }
+      </svg>
+      <span>Dark mode</span>
+      <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+    </button>
   </div>
 </header>
-
-<main>
-  <router-outlet></router-outlet>
-</main>
-
-<footer class="bg-gray-100 mt-12">
-  <div class="container mx-auto px-4 py-6">
-    <p class="text-center text-gray-600 text-sm">© 2023 BookMonkey App - Angular Workshop by workshops.de</p>
+<main><router-outlet></router-outlet></main>
+<footer class="site-footer">
+  <div class="mx-auto max-w-7xl px-4 py-6">
+    <p class="text-center text-sm text-muted">&copy; 2023 BookMonkey App &middot; Angular Workshop by workshops.de</p>
   </div>
 </footer>

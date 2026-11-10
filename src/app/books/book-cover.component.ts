@@ -12,10 +12,10 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
       [src]="cover"
       [alt]="'Cover of ' + title"
       (error)="onImageError()"
-      class="h-full w-full object-contain bg-gray-100"
+      class="h-full w-full object-contain bg-recessed"
     />
     <ng-template #noCover>
-      <div class="flex h-full items-center justify-center bg-gray-100 p-6 text-center text-gray-500">
+      <div class="flex h-full items-center justify-center bg-recessed p-6 text-center text-muted">
         No cover available
       </div>
     </ng-template>

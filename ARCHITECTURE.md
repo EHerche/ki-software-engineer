@@ -27,10 +27,10 @@ The project does not pin Node/npm through an `engines` field or version file. Th
 
 | Location                                                                               | Responsibility                                                                                                 |
 | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| [src/main.ts](src/main.ts), [src/index.html](src/index.html)                           | Browser bootstrap and HTML host (`app-root`, base URL `/`, external fonts)                                     |
+| [src/main.ts](src/main.ts), [src/index.html](src/index.html)                           | Browser bootstrap and HTML host (`app-root`, base URL `/`, system fonts)                                       |
 | [src/app](src/app/app.ts)                                                              | Root shell, application-wide providers and route table                                                         |
 | [src/app/books](src/app/books/book-list.component.ts)                                  | Only feature: list/search and details screens, display card, shared cover, HTTP client and `Book` interface    |
-| [src/app/shared](src/app/shared/toast.service.ts)                                      | Root-provided toast wrapper; currently unused                                                                  |
+| [src/app/shared](src/app/shared/toast.service.ts)                                      | Root-provided theme service and unused toast wrapper                                                           |
 | [src/styles.css](src/styles.css), [src/material-theme.scss](src/material-theme.scss)   | Tailwind entry and Material snack-bar color override                                                           |
 | `public/`, `docs/`                                                                     | Favicon copied to build output; README workshop logo respectively                                              |
 | [tests](tests/example.spec.ts), [tests-examples](tests-examples/demo-todo-app.spec.ts) | Mocked-API list/details regression tests and external-site starter tests; TodoMVC sample excluded by `testDir` |
@@ -44,8 +44,9 @@ The project does not pin Node/npm through an `engines` field or version file. Th
 
 1. [main.ts](src/main.ts) calls `bootstrapApplication(App, appConfig)` and logs bootstrap failures to the console.
 2. [app.config.ts](src/app/app.config.ts) provides browser global error listeners, zone-based change detection with `eventCoalescing: true`, the router, `HttpClient`, and animations. [angular.json](angular.json) explicitly includes the `zone.js` polyfill.
-3. [App](src/app/app.ts) supplies the header/footer and a `RouterOutlet` via an external template; its component CSS file is empty.
-4. [routes](src/app/app.routes.ts) eagerly imports `BookListComponent` for the empty path. A wildcard redirects other paths to the empty path. It also eagerly imports `BookDetailsComponent` at `books/:id`. There are no lazy routes, guards, resolvers, or route-level providers.
+3. A synchronous `provideAppInitializer` initializes the root-provided `ThemeService` before rendering. It reads `bookmonkey-theme` (`light`/`dark`) from localStorage, otherwise follows device color-scheme changes until the user toggles. Storage failures retain a session preference; the media listener is cleaned up on application destruction. The header switch applies `data-theme` to the document root; global CSS tokens set colors and native `color-scheme`, with a device-preference fallback before initialization. Constructors do not apply theme state.
+4. [App](src/app/app.ts) supplies the header/footer and a `RouterOutlet` via an external template; its component CSS file is empty.
+5. [routes](src/app/app.routes.ts) eagerly imports `BookListComponent` for the empty path. A wildcard redirects other paths to the empty path. It also eagerly imports `BookDetailsComponent` at `books/:id`. There are no lazy routes, guards, resolvers, or route-level providers.
 
 All five components are standalone. The books components declare `standalone: true`; `App` omits the flag. This interpretation uses the [Angular 20 standalone default](https://v20.angular.dev/guide/components), verified through Context7. No first-party NgModule is defined; components still import framework modules such as `CommonModule` and `FormsModule`.
 
@@ -79,7 +80,7 @@ flowchart LR
 
 The dependency direction is shell -> routes -> screen components -> API client -> Angular HTTP, with screens -> presentation components -> model. Shared code does not import books; books does not use shared code. There is no enforced module-boundary tooling.
 
-Recurring patterns are standalone imports, root-provided services, local discriminated Observable state, `inject` field initialization in screens, constructor DI in services, and Tailwind classes. List/details use external HTML; the smaller card/cover components retain inline templates. Existing `*ngIf`/`*ngFor` syntax is retained. There are no signals, reactive forms, application store, query cache, or persistence. These are conventions for this small feature, not evidence of a larger architecture.
+Recurring patterns are standalone imports, root-provided services, local discriminated Observable state, `inject` field initialization in screens, constructor DI in services, and Tailwind classes. List/details use external HTML; the smaller card/cover components retain inline templates. Existing `*ngIf`/`*ngFor` syntax is retained. There are no signals, reactive forms, application store, or query cache. Only the explicit light/dark theme preference is persisted. These are conventions for this small feature, not evidence of a larger architecture.
 
 ## Integrations and cross-cutting concerns
 
@@ -87,7 +88,7 @@ Recurring patterns are standalone imports, root-provided services, local discrim
 - **Backend boundary:** [README](README.md) instructs running `npx bookmonkey-api` separately at port 4730. The API is neither vendored nor declared/locked here. Its version, endpoint implementation, response contract, CORS policy, and production hosting are **unknown**. Requests go directly from the browser to localhost; a deployed browser would target the visitor's machine unless configuration/code changes.
 - **Authentication/authorization:** no login, token handling, session storage, auth service, guard, or permission checks exist in the inspected app. The model's `userId` alone does not establish authentication or authorization. Backend access rules are unknown.
 - **Errors:** bootstrap failures use `console.error`; global browser error listeners remain registered. List/details requests recover into inline states with Retry, and details treats 404 separately. Empty results only follow a successful list response. Expected request errors are handled by screens rather than a global toast/interceptor. [ToastService](src/app/shared/toast.service.ts) wraps `MatSnackBar.open(message, 'Close', { duration })` with a 3-second default but remains unused. No remote error reporting is configured.
-- **Styling/assets:** [styles.css](src/styles.css) imports Tailwind through [.postcssrc.json](.postcssrc.json); templates use responsive grid/utilities. [material-theme.scss](src/material-theme.scss) only overrides snack-bar container color, with no full Material theme declaration. [index.html](src/index.html) loads Google Fonts/Material Icons, and card images use API-provided URLs. These create external resource dependencies; the shared cover component handles missing or failed images with a text fallback.
+- **Styling/assets:** [styles.css](src/styles.css) imports Tailwind through [.postcssrc.json](.postcssrc.json); templates use responsive grid/utilities. [material-theme.scss](src/material-theme.scss) binds snack-bar colors to the shared theme tokens, with no full Material theme declaration. Typography uses local system serif/sans-serif stacks, with inline SVG icons and no remote font dependency. Card images use API-provided URLs. These create external resource dependencies; the shared cover component handles missing or failed images with a text fallback.
 
 ## Development, build, test and deployment
 
@@ -132,7 +133,13 @@ Application regression coverage is in [details tests](tests/book-details.spec.ts
 
 - Existing Angular 20 standalone/change-detection guidance and AsyncPipe teardown semantics were checked through Context7; RxJS cancellation was also checked against installed 7.8.0 source. Playwright clock usage was checked through Context7 and installed types.
 - Development compilation passes using `node node_modules/@angular/cli/bin/ng.js build --configuration development`.
-- Production compilation under sandbox network restrictions fails while inlining Google Fonts. This does not establish a source or budget failure; production completion/budgets remain unverified.
+- Production compilation under sandbox network restrictions fails while inlining Google Fonts. This does not establish a source or budget failure; production completion/budgets were unverified at that point; see the later reading-room theme validation below.
 - The legacy test command fails with `Cannot find module 'karma-jasmine'`; repairing it is outside this refactor.
 - Playwright browsers are provisioned under ignored `tmp/playwright-browsers`. In PowerShell set `$env:PLAYWRIGHT_BROWSERS_PATH='D:\ki-software-engineer\tmp\playwright-browsers'` before running tests against this cache. Browser-download network access required an approved sandbox escalation; Firefox/WebKit tests also required approved elevated execution after sandboxed Firefox launch stalled.
 - All 75 application regression cases pass (25 each in Chromium, Firefox and WebKit). Strict test TypeScript checking, targeted formatting and documentation links also pass. Detailed results and diff review are recorded in [REFACTORING.md](REFACTORING.md). Tests mock the backend and do not establish the live API contract or deployment behavior.
+
+## Reading-room theme validation
+
+Theme behavior is covered by `tests/theme.spec.ts` using mocked API responses, alongside the existing list/details suites. The palette covers both screens, cover fallbacks, and request states. Use desktop and 375px mobile checks for both themes. Remote font links were removed as part of the system-font design, eliminating the previous Google Fonts production-build dependency.
+
+Verified on 2026-11-10: development and production compilation pass (production initial bundle 393.88 kB, within budgets). All **111 application cases pass**: 37 each in Chromium, Firefox, and WebKit, including 12 theme cases per browser. Theme cases verify keyboard switching, device defaults/changes, persistence, direct links, navigation/reload, invalid preferences, blocked storage, AA text-token contrast, and no horizontal overflow at 375px/1440px. Both themes and collection/details/loading/error/empty/missing-cover screenshots were visually inspected. Strict test TypeScript checking, targeted Prettier checks, and diff whitespace checks pass. The initial sandbox Firefox run could not create pages; the elevated Firefox/WebKit rerun passed all 74 cases. No live API was required. The pre-existing incomplete Karma target remains unverified and unchanged.

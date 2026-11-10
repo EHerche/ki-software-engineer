@@ -1,7 +1,7 @@
 <div class="container mx-auto max-w-5xl px-4 py-12">
   <a
     routerLink="/"
-    class="mb-8 inline-flex items-center gap-2 rounded-sm font-medium text-blue-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
+    class="mb-8 inline-flex items-center gap-2 rounded-sm font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
   >
     <span aria-hidden="true">&larr;</span>
     Back to collection
@@ -11,23 +11,23 @@
     <div *ngIf="state.status === 'loading'" role="status" class="flex items-center justify-center gap-3 py-20">
       <span
         aria-hidden="true"
-        class="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-700 motion-reduce:animate-none"
+        class="h-8 w-8 animate-spin rounded-full border-4 border-line border-t-accent motion-reduce:animate-none"
       ></span>
-      <p class="text-gray-600">Loading book...</p>
+      <p class="text-muted">Loading book...</p>
     </div>
 
-    <section *ngIf="state.status === 'not-found'" role="alert" class="rounded-xl bg-gray-50 p-8 text-center">
-      <h1 class="mb-3 text-2xl font-bold text-gray-800">Book not found</h1>
-      <p class="text-gray-600">This book is unavailable. Return to the collection to choose another book.</p>
+    <section *ngIf="state.status === 'not-found'" role="alert" class="rounded-xl bg-surface p-8 text-center">
+      <h1 class="mb-3 text-2xl font-bold text-ink">Book not found</h1>
+      <p class="text-muted">This book is unavailable. Return to the collection to choose another book.</p>
     </section>
 
-    <section *ngIf="state.status === 'error'" role="alert" class="rounded-xl bg-gray-50 p-8 text-center">
-      <h1 class="mb-3 text-2xl font-bold text-gray-800">Unable to load book</h1>
-      <p class="mb-6 text-gray-600">Please try again.</p>
+    <section *ngIf="state.status === 'error'" role="alert" class="rounded-xl bg-surface p-8 text-center">
+      <h1 class="mb-3 text-2xl font-bold text-ink">Unable to load book</h1>
+      <p class="mb-6 text-muted">Please try again.</p>
       <button
         type="button"
         (click)="retry()"
-        class="rounded-md bg-blue-700 px-5 py-2 font-medium text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
+        class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
       >
         Retry
       </button>
@@ -35,38 +35,38 @@
 
     <article *ngIf="state.book as book" aria-labelledby="book-title" class="grid gap-8 md:grid-cols-[16rem_1fr]">
       <div
-        class="mx-auto aspect-[3/4] w-full max-w-xs self-start overflow-hidden rounded-xl border border-gray-200 bg-gray-100"
+        class="mx-auto aspect-[3/4] w-full max-w-xs self-start overflow-hidden rounded-xl border border-line bg-recessed"
       >
         <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
       </div>
 
       <div class="min-w-0 break-words">
-        <h1 id="book-title" class="mb-3 text-3xl font-bold text-gray-800">{{ book.title }}</h1>
-        <p *ngIf="book.subtitle" class="mb-4 text-xl text-gray-600">{{ book.subtitle }}</p>
-        <p class="mb-8 text-lg text-blue-700">{{ book.author }}</p>
+        <h1 id="book-title" class="mb-3 text-3xl font-bold text-ink">{{ book.title }}</h1>
+        <p *ngIf="book.subtitle" class="mb-4 text-xl text-muted">{{ book.subtitle }}</p>
+        <p class="mb-8 text-lg text-accent">{{ book.author }}</p>
 
-        <dl class="grid grid-cols-1 gap-5 border-y border-gray-200 py-6 sm:grid-cols-2">
+        <dl class="grid grid-cols-1 gap-5 border-y border-line py-6 sm:grid-cols-2">
           <div>
-            <dt class="text-sm font-medium text-gray-500">ISBN</dt>
-            <dd class="mt-1 text-gray-800">{{ book.isbn }}</dd>
+            <dt class="text-sm font-medium text-muted">ISBN</dt>
+            <dd class="mt-1 text-ink">{{ book.isbn }}</dd>
           </div>
           <div>
-            <dt class="text-sm font-medium text-gray-500">Publisher</dt>
-            <dd class="mt-1 text-gray-800">{{ book.publisher }}</dd>
+            <dt class="text-sm font-medium text-muted">Publisher</dt>
+            <dd class="mt-1 text-ink">{{ book.publisher }}</dd>
           </div>
           <div>
-            <dt class="text-sm font-medium text-gray-500">Pages</dt>
-            <dd class="mt-1 text-gray-800">{{ book.numPages }}</dd>
+            <dt class="text-sm font-medium text-muted">Pages</dt>
+            <dd class="mt-1 text-ink">{{ book.numPages }}</dd>
           </div>
           <div>
-            <dt class="text-sm font-medium text-gray-500">Price</dt>
-            <dd class="mt-1 text-gray-800">{{ book.price }}</dd>
+            <dt class="text-sm font-medium text-muted">Price</dt>
+            <dd class="mt-1 text-ink">{{ book.price }}</dd>
           </div>
         </dl>
 
         <section class="mt-8" aria-labelledby="book-abstract">
-          <h2 id="book-abstract" class="mb-3 text-xl font-semibold text-gray-800">About this book</h2>
-          <p class="whitespace-pre-line leading-relaxed text-gray-700">{{ book.abstract }}</p>
+          <h2 id="book-abstract" class="mb-3 text-xl font-semibold text-ink">About this book</h2>
+          <p class="whitespace-pre-line leading-relaxed text-ink">{{ book.abstract }}</p>
         </section>
       </div>
     </article>
