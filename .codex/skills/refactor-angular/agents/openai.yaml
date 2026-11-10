@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Refactor Angular'
+  short_description: 'Refactor Angular while preserving behavior'
+  default_prompt: 'Use $refactor-angular to clean up the recent Angular implementation using project conventions and SOLID, preserve behavior, and verify the refactor.'
+policy:
+  allow_implicit_invocation: true

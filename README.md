@@ -37,6 +37,12 @@ The API provides fake data that you can use in your Angular application.
 
 ## VS Code
 
+Select **BookMonkey: Frontend + Backend** in Run and Debug, then press **F5**. This starts the API on
+`http://localhost:4730`, waits until it is ready, starts Angular on `http://localhost:4200`, and opens Chrome once Angular
+is ready. Stopping any of these debug sessions stops the others as well. Run `npm install` first; the first API start
+also needs internet access because `npx --yes bookmonkey-api` downloads the external package automatically.
+The **ng serve** configuration starts just the frontend and Chrome when you already have an API running.
+
 If you are using [VS Code](https://code.visualstudio.com/) as you editor of choice, you might see a popup after opening this repository.
 We added a few plugin recommendations to simplify writing code during the workshop:
 

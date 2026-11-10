@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Implement to Green'
+  short_description: 'Implement code to pass failing tests'
+  default_prompt: 'Use $implement-to-green to implement minimal production behavior for the supplied failing tests, verify all application suites, and report any test corrections or blockers.'
+policy:
+  allow_implicit_invocation: true

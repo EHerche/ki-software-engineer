@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Scaffold Red Tests'
+  short_description: 'Generate and verify Red-phase tests'
+  default_prompt: 'Use $scaffold-red-tests to turn the supplied user story and Given/When/Then acceptance criteria into appropriate unit and UI tests, verify their initial failures, and stop before production implementation.'
+policy:
+  allow_implicit_invocation: true

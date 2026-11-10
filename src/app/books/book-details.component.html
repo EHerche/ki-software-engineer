@@ -33,42 +33,62 @@
       </button>
     </section>
 
-    <article *ngIf="state.book as book" aria-labelledby="book-title" class="grid gap-8 md:grid-cols-[16rem_1fr]">
-      <div
-        class="mx-auto aspect-[3/4] w-full max-w-xs self-start overflow-hidden rounded-xl border border-line bg-recessed"
-      >
-        <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
-      </div>
+    <ng-container *ngIf="state.book as book">
+      <app-book-edit
+        *ngIf="state.editing; else bookDetails"
+        #editor
+        [book]="book"
+        (saved)="bookSaved($event)"
+        (cancelled)="cancelEdit()"
+      ></app-book-edit>
+      <ng-template #bookDetails>
+        <article aria-labelledby="book-title" class="grid gap-8 md:grid-cols-[16rem_1fr]">
+          <div
+            class="mx-auto aspect-[3/4] w-full max-w-xs self-start overflow-hidden rounded-xl border border-line bg-recessed"
+          >
+            <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
+          </div>
 
-      <div class="min-w-0 break-words">
-        <h1 id="book-title" class="mb-3 text-3xl font-bold text-ink">{{ book.title }}</h1>
-        <p *ngIf="book.subtitle" class="mb-4 text-xl text-muted">{{ book.subtitle }}</p>
-        <p class="mb-8 text-lg text-accent">{{ book.author }}</p>
+          <div class="min-w-0 break-words">
+            <h1 id="book-title" class="mb-3 text-3xl font-bold text-ink">{{ book.title }}</h1>
+            <p *ngIf="book.subtitle" class="mb-4 text-xl text-muted">{{ book.subtitle }}</p>
+            <p class="mb-8 text-lg text-accent">{{ book.author }}</p>
 
-        <dl class="grid grid-cols-1 gap-5 border-y border-line py-6 sm:grid-cols-2">
-          <div>
-            <dt class="text-sm font-medium text-muted">ISBN</dt>
-            <dd class="mt-1 text-ink">{{ book.isbn }}</dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-muted">Publisher</dt>
-            <dd class="mt-1 text-ink">{{ book.publisher }}</dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-muted">Pages</dt>
-            <dd class="mt-1 text-ink">{{ book.numPages }}</dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-muted">Price</dt>
-            <dd class="mt-1 text-ink">{{ book.price }}</dd>
-          </div>
-        </dl>
+            <button
+              #editButton
+              type="button"
+              (click)="edit()"
+              class="mb-6 rounded-md bg-accent px-5 py-3 font-medium text-on-accent hover:bg-accent-hover"
+            >
+              Edit book
+            </button>
 
-        <section class="mt-8" aria-labelledby="book-abstract">
-          <h2 id="book-abstract" class="mb-3 text-xl font-semibold text-ink">About this book</h2>
-          <p class="whitespace-pre-line leading-relaxed text-ink">{{ book.abstract }}</p>
-        </section>
-      </div>
-    </article>
+            <dl class="grid grid-cols-1 gap-5 border-y border-line py-6 sm:grid-cols-2">
+              <div>
+                <dt class="text-sm font-medium text-muted">ISBN</dt>
+                <dd class="mt-1 text-ink">{{ book.isbn }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-muted">Publisher</dt>
+                <dd class="mt-1 text-ink">{{ book.publisher }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-muted">Pages</dt>
+                <dd class="mt-1 text-ink">{{ book.numPages }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-muted">Price</dt>
+                <dd class="mt-1 text-ink">{{ book.price }}</dd>
+              </div>
+            </dl>
+
+            <section class="mt-8" aria-labelledby="book-abstract">
+              <h2 id="book-abstract" class="mb-3 text-xl font-semibold text-ink">About this book</h2>
+              <p class="whitespace-pre-line leading-relaxed text-ink">{{ book.abstract }}</p>
+            </section>
+          </div>
+        </article>
+      </ng-template>
+    </ng-container>
   </ng-container>
 </div>

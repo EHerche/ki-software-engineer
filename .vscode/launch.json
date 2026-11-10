@@ -3,11 +3,60 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "BookMonkey: Frontend + Backend",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "bookmonkey-api"],
+      "windows": {
+        "runtimeExecutable": "npx.cmd"
+      },
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "PORT": "4730"
+      },
+      "serverReadyAction": {
+        "pattern": "JSON Server is running on port 4730",
+        "action": "startDebugging",
+        "name": "ng serve",
+        "killOnServerStop": true
+      },
+      "presentation": {
+        "order": 1
+      }
+    },
+    {
       "name": "ng serve",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@angular/cli/bin/ng.js",
+      "args": ["serve", "--host", "localhost", "--port", "4200"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "cascadeTerminateToConfigurations": ["BookMonkey: Frontend + Backend"],
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(http://localhost:4200/)",
+        "action": "startDebugging",
+        "name": "Chrome: BookMonkey",
+        "killOnServerStop": true
+      },
+      "presentation": {
+        "order": 2
+      }
+    },
+    {
+      "name": "Chrome: BookMonkey",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}",
+      "cascadeTerminateToConfigurations": ["ng serve", "BookMonkey: Frontend + Backend"],
+      "presentation": {
+        "hidden": true
+      }
     },
     {
       "name": "ng test",

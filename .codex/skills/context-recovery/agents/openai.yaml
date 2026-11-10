@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Context Recovery'
+  short_description: 'Recover requirements and issue context before coding'
+  default_prompt: 'Use $context-recovery to recover the current requirement or issue and summarize the goal, acceptance criteria, scope, and next step.'
