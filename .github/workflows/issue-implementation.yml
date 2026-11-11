@@ -48,6 +48,7 @@ jobs:
 
           [permissions.issue-implementation.network.domains]
           "api.github.com" = "allow"
+          "github.com" = "allow"
           EOF
 
       - name: Implement issue with Codex
