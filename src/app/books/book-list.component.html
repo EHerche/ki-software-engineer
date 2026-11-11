@@ -30,6 +30,19 @@
     </div>
   </div>
 
+  <div class="mb-10 flex flex-wrap items-center gap-4">
+    <button
+      #rouletteButton
+      type="button"
+      [disabled]="!availableBooks.length || rouletteRunning"
+      (click)="startRoulette($event)"
+      class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+    >
+      Überrasche mich!
+    </button>
+    <span *ngIf="rouletteStatus" id="roulette-status" role="status" aria-live="polite" class="sr-only">{{ rouletteStatus }}</span>
+  </div>
+
   <ng-container *ngIf="state$ | async as state">
     <div *ngIf="state.status === 'loading'" role="status" class="flex justify-center items-center py-20">
       <div class="motion-safe:animate-pulse flex flex-col items-center">
@@ -57,7 +70,7 @@
         <app-book-item
           *ngFor="let book of books; trackBy: trackById"
           [book]="book"
-          [active]="selectedBook?.id === book.id"
+          [active]="selectedBook?.id === book.id || rouletteHighlight?.id === book.id"
           (selected)="openPreview(book, $event)"
         ></app-book-item>
       </div>
@@ -97,4 +110,10 @@
     </div>
   </ng-container>
 </div>
-<app-book-preview *ngIf="selectedBook as book" [book]="book" (closed)="closePreview()"></app-book-preview>
+<app-book-preview
+  *ngIf="selectedBook as book"
+  [book]="book"
+  [roulette]="rouletteBook"
+  (closed)="closePreview()"
+  (reroll)="startRoulette()"
+></app-book-preview>
