@@ -57,6 +57,7 @@
         <app-book-item
           *ngFor="let book of books; trackBy: trackById"
           [book]="book"
+          [active]="selectedBook?.id === book.id"
           (selected)="openPreview(book, $event)"
         ></app-book-item>
       </div>
@@ -96,8 +97,4 @@
     </div>
   </ng-container>
 </div>
-<app-book-preview
-  *ngIf="selectedBook as book"
-  [book]="book"
-  (closed)="closePreview()"
-></app-book-preview>
+<app-book-preview *ngIf="selectedBook as book" [book]="book" (closed)="closePreview()"></app-book-preview>

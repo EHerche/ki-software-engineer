@@ -1,0 +1,28 @@
+<div class="shelf-slot">
+  <button
+    type="button"
+    class="book-picker"
+    [class.is-selected]="active"
+    [attr.aria-label]="'Preview ' + book.title"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="active"
+    (click)="select($event)"
+  >
+    <span class="shelf-book">
+      <span class="book-back" aria-hidden="true"></span>
+      <span class="book-pages" aria-hidden="true"></span>
+      <span class="book-spine" aria-hidden="true"
+        ><span>{{ book.title }}</span></span
+      >
+      <span class="book-front">
+        <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
+      </span>
+    </span>
+  </button>
+  <div class="shelf-label">
+    <h2>
+      <a [routerLink]="['/books', book.id]">{{ book.title }}</a>
+    </h2>
+    <p>{{ book.author }}</p>
+  </div>
+</div>

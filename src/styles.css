@@ -200,44 +200,215 @@
   min-width: 44px;
   min-height: 44px;
 }
-.book-card {
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-}
 .book-shelf {
+  --book-depth: 24px;
+  --book-height: 224px;
+  --shelf-top: 264px;
   position: relative;
-  perspective: 1100px;
-  padding: 1rem 0 2rem;
+  margin-top: 2rem;
 }
 .shelf-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-  align-items: end;
-  gap: 2rem 1.5rem;
-  padding: 0 1rem 2.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  border: 12px solid var(--recessed);
+  border-top-width: 18px;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 10%), transparent 12%, transparent 88%, rgb(0 0 0 / 10%)), var(--recessed);
+  box-shadow:
+    inset 0 10px 25px rgb(0 0 0 / 15%),
+    0 14px 28px rgb(0 0 0 / 10%);
 }
-.shelf-row::after {
+.shelf-row:empty {
+  display: none;
+}
+.shelf-row app-book-item {
+  display: block;
+  position: relative;
+  min-width: 0;
+}
+/* Each grid cell contributes a seamless section of the board on its row. */
+.shelf-row app-book-item::before,
+.shelf-row app-book-item::after {
   content: '';
   position: absolute;
-  inset: auto 0 0;
-  height: 1.25rem;
-  border-radius: 0.35rem;
-  background: var(--recessed);
-  border: 1px solid var(--line);
-  box-shadow: 0 0.7rem 0 var(--line), 0 1rem 1.5rem rgb(0 0 0 / 12%);
-  transform: rotateX(52deg);
-  transform-origin: top;
+  left: 0;
+  right: 0;
   pointer-events: none;
 }
-.book-on-shelf {
-  position: relative;
-  z-index: 1;
-  transform: rotateY(-2deg) rotateZ(-1deg);
-  transform-origin: bottom center;
+.shelf-row app-book-item::before {
+  top: calc(var(--shelf-top) - 19px);
+  height: 20px;
+  background: linear-gradient(var(--surface), var(--line));
 }
-.book-on-shelf:nth-child(even) { transform: rotateY(2deg) rotateZ(1deg); }
-.book-on-shelf:hover,
-.book-on-shelf:focus-within { transform: translateY(-0.45rem) rotateY(0) rotateZ(0); }
+.shelf-row app-book-item::after {
+  top: var(--shelf-top);
+  height: 17px;
+  border-top: 1px solid var(--surface);
+  border-bottom: 3px solid color-mix(in srgb, var(--line), var(--ink) 18%);
+  background: linear-gradient(var(--line), var(--recessed));
+  box-shadow: 0 12px 14px rgb(0 0 0 / 19%);
+}
+.shelf-slot {
+  padding: 0 20px 24px;
+}
+.book-picker {
+  display: flex;
+  position: relative;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: var(--shelf-top);
+  padding: 0 12px 7px;
+  border: 0;
+  background: transparent;
+  perspective: 900px;
+  isolation: isolate;
+}
+.book-picker::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12%;
+  width: 80%;
+  height: 18px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 30%);
+  filter: blur(6px);
+  z-index: -1;
+}
+.shelf-book {
+  display: block;
+  position: relative;
+  width: 158px;
+  max-width: 100%;
+  height: var(--book-height);
+  transform-style: preserve-3d;
+  transform: rotateY(-24deg) rotateZ(-2deg);
+  transform-origin: center bottom;
+  transition: transform 240ms ease;
+}
+.shelf-row app-book-item:nth-child(3n + 2) .shelf-book {
+  --book-height: 210px;
+  transform: rotateY(-19deg) rotateZ(2deg);
+}
+.shelf-row app-book-item:nth-child(3n) .shelf-book {
+  --book-height: 232px;
+}
+.book-front,
+.book-back,
+.book-spine,
+.book-pages {
+  position: absolute;
+  display: block;
+}
+.book-front,
+.book-back {
+  inset: 0;
+  border-radius: 2px 5px 5px 2px;
+  background: var(--accent);
+  backface-visibility: hidden;
+}
+.book-front {
+  transform: translateZ(calc(var(--book-depth) / 2));
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 20%),
+    5px 8px 13px rgb(0 0 0 / 22%);
+  overflow: hidden;
+}
+.book-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 28%),
+    transparent 4%,
+    rgb(255 255 255 / 22%) 6%,
+    transparent 10%,
+    transparent 90%,
+    rgb(0 0 0 / 10%)
+  );
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: inherit;
+}
+.book-front img {
+  object-fit: cover;
+}
+.book-back {
+  transform: translateZ(calc(var(--book-depth) / -2)) rotateY(180deg);
+}
+.book-pages {
+  top: 3px;
+  bottom: 3px;
+  right: calc(var(--book-depth) / -2 + 1px);
+  width: calc(var(--book-depth) - 2px);
+  transform: rotateY(90deg);
+  background: repeating-linear-gradient(90deg, #e0d9c9 0 1px, #faf6eb 1px 3px);
+  border: 1px solid #c9c0ae;
+}
+.book-spine {
+  top: 0;
+  bottom: 0;
+  left: calc(var(--book-depth) / -2);
+  width: var(--book-depth);
+  transform: rotateY(-90deg);
+  background: linear-gradient(90deg, rgb(0 0 0 / 25%), transparent 40%, rgb(255 255 255 / 15%)), var(--accent);
+  color: var(--on-accent);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.book-spine span {
+  display: block;
+  writing-mode: vertical-rl;
+  padding: 14px 3px;
+  max-height: 100%;
+  font:
+    600 12px Georgia,
+    serif;
+}
+.book-picker:hover .shelf-book,
+.book-picker:focus-visible .shelf-book,
+.book-picker.is-selected .shelf-book {
+  transform: translateY(-16px) translateZ(24px) rotateY(-12deg);
+}
+.shelf-label {
+  position: relative;
+  margin: 30px auto 0;
+  max-width: 210px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.shelf-label h2 {
+  margin: 0 0 5px;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+.shelf-label a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.shelf-label p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+@media (max-width: 480px) {
+  .shelf-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shelf-book {
+    transition: none;
+  }
+  .book-picker:hover .shelf-book,
+  .book-picker:focus-visible .shelf-book,
+  .book-picker.is-selected .shelf-book {
+    transform: rotateY(-24deg) rotateZ(-2deg);
+  }
+}
 .preview-backdrop {
   position: fixed;
   z-index: 20;
@@ -266,34 +437,15 @@
   min-height: 2.75rem;
   font-size: 1.75rem;
 }
-.book-card:hover,
-.book-card:focus-within {
-  box-shadow: var(--shadow-hover);
-  border-color: var(--accent);
-}
-.book-card h2 {
-  line-height: 1.35;
-}
 .site-footer {
   border-top: 1px solid var(--line);
   margin-top: 3rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .book-card {
-    transition:
-      box-shadow 180ms ease,
-      border-color 180ms ease;
-  }
   .switch-thumb {
     transition: transform 150ms ease;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .book-on-shelf,
-  .book-on-shelf:hover,
-  .book-on-shelf:focus-within { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
