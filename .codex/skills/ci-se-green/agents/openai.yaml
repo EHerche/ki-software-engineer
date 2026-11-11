@@ -1,0 +1,4 @@
+interface:
+  display_name: "CI SE Green"
+  short_description: "Implement minimal fixes from CI test failures"
+  default_prompt: "Use $ci-se-green to implement minimal production code from the supplied failing test output, preserve valid tests, and leave test, build, and lint verification to GitHub Actions."
