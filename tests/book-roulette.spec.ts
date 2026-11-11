@@ -133,20 +133,38 @@ test('search cancels animation and prevents a late result', async ({ page }) => 
   await expect(page.getByRole('textbox')).toBeFocused();
 });
 
-test('explicit roll visibly animates even when the system reduces motion', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  test(`always rolls visibly with motion preference ${reducedMotion}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto('/');
+    await surprise(page).click();
+    const cube = page.locator('.roulette-cube');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(cube).toHaveClass(/is-spinning/);
+    await expect(cube).toHaveCSS('animation-name', /roulette-roll/);
+    const initialTransform = await cube.evaluate(element => getComputedStyle(element).transform);
+    await expect
+      .poll(() => page.locator('.roulette-cube.is-spinning').evaluate(element => getComputedStyle(element).transform))
+      .not.toBe(initialTransform);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+}
+
+test('changing system motion preference keeps the explicit roll running', async ({ page }) => {
+  await openWithClock(page);
   await surprise(page).click();
-  const cube = page.locator('.roulette-cube');
+  await page.clock.runFor(20);
+  await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.runFor(20);
+  await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
+  await expect(page.locator('.roulette-cube')).toHaveCSS('animation-name', /roulette-roll/);
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(cube).toHaveClass(/is-spinning/);
-  await expect(cube).toHaveCSS('animation-name', /roulette-roll/);
-  const initialTransform = await cube.evaluate(element => getComputedStyle(element).transform);
-  await expect
-    .poll(() => page.locator('.roulette-cube.is-spinning').evaluate(element => getComputedStyle(element).transform))
-    .not.toBe(initialTransform);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await finishRoll(page);
   await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(surprise(page)).toBeEnabled();
+  await expect(page.locator('.roulette-cube')).not.toHaveClass(/is-spinning/);
 });
 
 test('waits for the real animation end instead of opening the dialog on a timer', async ({ page }) => {
