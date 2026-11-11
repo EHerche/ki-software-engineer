@@ -1,0 +1,4 @@
+interface:
+  display_name: "CI Re-Review"
+  short_description: "Re-review GitHub issues for requirement quality"
+  default_prompt: "Use $ci-re-review to re-analyze the GitHub issue after recent changes and update its analysis comment with requirement gaps and next steps."
