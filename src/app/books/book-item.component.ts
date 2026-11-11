@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Book } from './book';
 import { BookCoverComponent } from './book-cover.component';
@@ -9,7 +9,7 @@ import { BookCoverComponent } from './book-cover.component';
   standalone: true,
   imports: [CommonModule, RouterLink, BookCoverComponent],
   template: `
-    <div class="book-card bg-surface rounded-xl overflow-hidden flex flex-col h-full">
+    <div class="book-card book-on-shelf bg-surface rounded-xl overflow-hidden flex flex-col h-full">
       <div class="relative aspect-[3/4] overflow-hidden">
         <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
       </div>
@@ -17,6 +17,7 @@ import { BookCoverComponent } from './book-cover.component';
         <h2 class="text-lg font-semibold text-ink mb-1 line-clamp-2">
           <a
             [routerLink]="['/books', book.id]"
+            (click)="select($event)"
             class="rounded-sm hover:text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             {{ book.title }}
@@ -35,4 +36,10 @@ import { BookCoverComponent } from './book-cover.component';
 })
 export class BookItemComponent {
   @Input() book!: Book;
+  @Output() selected = new EventEmitter<Event>();
+
+  select(event: Event): void {
+    event.preventDefault();
+    this.selected.emit(event);
+  }
 }
