@@ -21,6 +21,7 @@
         <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
       </div>
       <div class="min-w-0">
+        <p *ngIf="roulette" class="eyebrow mb-2">This book chose you</p>
         <h2 id="preview-title" class="mb-2 text-2xl font-bold text-ink">{{ book.title }}</h2>
         <p class="mb-5 text-accent">{{ book.author }}</p>
         <p class="mb-6 whitespace-pre-line text-muted">{{ shortDescription }}</p>

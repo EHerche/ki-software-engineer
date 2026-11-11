@@ -30,17 +30,52 @@
     </div>
   </div>
 
-  <div class="mb-10 flex flex-wrap items-center gap-4">
-    <button
-      #rouletteButton
-      type="button"
-      [disabled]="!availableBooks.length || rouletteRunning"
-      (click)="startRoulette($event)"
-      class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+  <div class="roulette-panel mb-10">
+    <div class="roulette-stage" [class.is-rolling]="rouletteRunning" aria-hidden="true">
+      <div
+        class="roulette-cube"
+        [class.is-spinning]="rouletteRunning"
+        [class.has-result]="rouletteBook"
+        (animationend)="onRouletteAnimationEnd($event)"
+      >
+        <div
+          *ngFor="let book of cubeBooks; let face = index"
+          class="cube-face"
+          [class.cube-front]="face === 0"
+          [class.cube-back]="face === 1"
+          [class.cube-right]="face === 2"
+          [class.cube-left]="face === 3"
+          [class.cube-top]="face === 4"
+          [class.cube-bottom]="face === 5"
+        >
+          <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
+          <span class="cube-title">{{ book.title }}</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow mb-2">Let fate choose</p>
+      <p class="mb-4 text-muted">
+        {{ rouletteRunning ? 'Rolling for your next read…' : 'One roll. Your next story.' }}
+      </p>
+      <button
+        #rouletteButton
+        type="button"
+        [disabled]="!availableBooks.length || rouletteRunning"
+        (click)="startRoulette($event)"
+        class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+      >
+        Überrasche mich!
+      </button>
+    </div>
+    <span
+      id="roulette-status"
+      [attr.role]="rouletteStatus ? 'status' : null"
+      aria-live="polite"
+      aria-atomic="true"
+      class="sr-only"
+      >{{ rouletteStatus }}</span
     >
-      Überrasche mich!
-    </button>
-    <span *ngIf="rouletteStatus" id="roulette-status" role="status" aria-live="polite" class="sr-only">{{ rouletteStatus }}</span>
   </div>
 
   <ng-container *ngIf="state$ | async as state">
@@ -70,7 +105,7 @@
         <app-book-item
           *ngFor="let book of books; trackBy: trackById"
           [book]="book"
-          [active]="selectedBook?.id === book.id || rouletteHighlight?.id === book.id"
+          [active]="selectedBook?.id === book.id"
           (selected)="openPreview(book, $event)"
         ></app-book-item>
       </div>

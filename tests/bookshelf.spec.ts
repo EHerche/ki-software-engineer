@@ -56,6 +56,8 @@ test('keyboard preview works with missing covers and reduced motion, and search 
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
   await trigger.press('Enter');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close preview' })).toBeFocused();
   await page.getByLabel('Search the collection').fill('new search');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });

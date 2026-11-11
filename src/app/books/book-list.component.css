@@ -1,0 +1,112 @@
+.roulette-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.roulette-stage {
+  --cube-half: 3.5rem;
+  display: grid;
+  place-items: center;
+  width: 12rem;
+  height: 12rem;
+  perspective: 650px;
+}
+
+.roulette-cube {
+  position: relative;
+  width: calc(var(--cube-half) * 2);
+  height: calc(var(--cube-half) * 2);
+  transform-style: preserve-3d;
+  transform: rotateX(-22deg) rotateY(32deg);
+}
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid var(--accent);
+  border-radius: 0.2rem;
+  background: var(--surface);
+  color: var(--accent);
+  backface-visibility: hidden;
+  box-shadow: inset 0 0 1rem var(--line);
+}
+
+.cube-title {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0.35rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.65rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.cube-front {
+  transform: translateZ(var(--cube-half));
+}
+.cube-back {
+  transform: rotateY(180deg) translateZ(var(--cube-half));
+}
+.cube-right {
+  transform: rotateY(90deg) translateZ(var(--cube-half));
+}
+.cube-left {
+  transform: rotateY(-90deg) translateZ(var(--cube-half));
+}
+.cube-top {
+  transform: rotateX(90deg) translateZ(var(--cube-half));
+}
+.cube-bottom {
+  transform: rotateX(-90deg) translateZ(var(--cube-half));
+}
+
+.is-spinning {
+  animation: roulette-roll 2.8s linear forwards;
+}
+
+.has-result {
+  transform: rotateX(0) rotateY(0) rotateZ(0);
+}
+
+.is-rolling {
+  animation: roulette-hop 2.8s linear;
+}
+
+@keyframes roulette-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  15%,
+  45% {
+    translate: 0 -1.25rem;
+  }
+  30%,
+  60% {
+    translate: 0 0.3rem;
+  }
+  75% {
+    translate: 0 -0.2rem;
+  }
+}
+
+@keyframes roulette-roll {
+  from {
+    transform: rotateX(-22deg) rotateY(32deg) rotateZ(0);
+  }
+  80% {
+    transform: rotateX(1000deg) rotateY(1320deg) rotateZ(660deg);
+    animation-timing-function: ease-out;
+  }
+  to {
+    transform: rotateX(1080deg) rotateY(1440deg) rotateZ(720deg);
+  }
+}
