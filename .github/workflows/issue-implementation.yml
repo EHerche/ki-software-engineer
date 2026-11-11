@@ -43,11 +43,16 @@ jobs:
           [permissions.issue-implementation]
           extends = ":workspace"
 
+          # Git staging and commits need write access to repository metadata.
+          [permissions.issue-implementation.filesystem.":workspace_roots"]
+          ".git" = "write"
+
           [permissions.issue-implementation.network]
           enabled = true
 
           [permissions.issue-implementation.network.domains]
           "api.github.com" = "allow"
+          "github.com" = "allow"
           EOF
 
       - name: Implement issue with Codex

@@ -12,7 +12,7 @@ REPO: ${{ github.repository }}
 ISSUE_NUMBER: ${{ github.event.issue.number }}
 BRANCH: ${{ steps.prepare-branch.outputs.branch_name }}
 
-**IMPORTANT: You are already in the feature branch. Implement the feature completely and create the necessary commits.**
+**IMPORTANT: You are already in the feature branch. Implement the feature completely and create the necessary commits. Push the branch and create a PR, assign the reviewer to the issue creator.**
 
 Implements minimal production code so that existing failing tests pass. Complements developer-red, which scaffolds failing tests. **Do not** run `npm test`, Playwright, `npm run build`, or linters here; a GitHub Action will run them after your changes.
 
