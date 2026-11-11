@@ -58,6 +58,7 @@ jobs:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           codex-home: ${{ runner.temp }}/codex-pr-review
           permission-profile: pr-review
+          allow-bot-users: 'github-actions[bot]'
           model: 'gpt-5.6-luna'
           prompt: |
             REPO: ${{ github.repository }}
