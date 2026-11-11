@@ -1,0 +1,37 @@
+<div class="preview-backdrop" (click)="close()">
+  <section
+    class="book-preview bg-surface"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="preview-title"
+    (click)="$event.stopPropagation()"
+    (keydown)="onKeydown($event)"
+  >
+    <button
+      #closeButton
+      type="button"
+      class="preview-close rounded-sm text-muted hover:text-ink"
+      aria-label="Close preview"
+      (click)="close()"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <div class="grid gap-6 sm:grid-cols-[9rem_1fr]">
+      <div class="aspect-[3/4] overflow-hidden rounded-lg bg-recessed">
+        <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
+      </div>
+      <div class="min-w-0">
+        <h2 id="preview-title" class="mb-2 text-2xl font-bold text-ink">{{ book.title }}</h2>
+        <p class="mb-5 text-accent">{{ book.author }}</p>
+        <p class="mb-6 whitespace-pre-line text-muted">{{ shortDescription }}</p>
+        <a
+          [routerLink]="['/books', book.id]"
+          class="inline-flex rounded-md bg-accent px-4 py-2 font-medium text-on-accent hover:bg-accent-hover"
+          (click)="close()"
+        >
+          View details
+        </a>
+      </div>
+    </div>
+  </section>
+</div>

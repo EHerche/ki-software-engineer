@@ -52,8 +52,14 @@
       </button>
     </section>
 
-    <div *ngIf="state.books as books" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-      <app-book-item *ngFor="let book of books; trackBy: trackById" [book]="book"></app-book-item>
+    <div *ngIf="state.books as books" class="book-shelf" aria-label="Book collection">
+      <div class="shelf-row">
+        <app-book-item
+          *ngFor="let book of books; trackBy: trackById"
+          [book]="book"
+          (selected)="openPreview(book, $event)"
+        ></app-book-item>
+      </div>
 
       <div
         *ngIf="books.length === 0"
@@ -90,3 +96,8 @@
     </div>
   </ng-container>
 </div>
+<app-book-preview
+  *ngIf="selectedBook as book"
+  [book]="book"
+  (closed)="closePreview()"
+></app-book-preview>
