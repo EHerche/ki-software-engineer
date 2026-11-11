@@ -24,13 +24,14 @@ If an analysis comment already exists, update it; otherwise add a new comment ti
 
 ## Labels and human approval
 
-- For **SUFFICIENT**, apply `ready-for-implementation` and remove `needs-clarification` if present.
-- For **NEEDS IMPROVEMENT**, apply `needs-clarification` and remove `ready-for-implementation` if present.
+- `ready-for-implementation` is the implementation approval signal. When it is present for the current requirements, implementation may start without another confirmation.
+- An authorized human can grant approval by applying `ready-for-implementation` directly or by explicitly approving the current requirements in a comment. For **SUFFICIENT**, apply the label after such explicit approval, or preserve it if already present for the current requirements; remove `needs-clarification` if present.
+- A **SUFFICIENT** verdict alone does not grant approval. Without human approval, leave `ready-for-implementation` unset and state **Awaiting human approval — implementation must not start** under **Next steps**.
+- For **NEEDS IMPROVEMENT**, apply `needs-clarification` and remove `ready-for-implementation` if present. If requirements materially change after approval, remove `ready-for-implementation` and request renewed human approval for the changed scope.
 - Preserve unrelated labels. Create missing analysis labels when permitted; otherwise report the blocked operation. Read the issue back to verify the labels and report actual failures.
-- `ready-for-implementation` indicates requirement quality only. Neither this label nor a **SUFFICIENT** verdict authorizes implementation.
-- This skill performs analysis, comment updates, and analysis labeling only. Do not start tests, implementation, branches, pull requests, or an implementation workflow as part of this skill.
-- Implementation requires separate, explicit approval from an authorized human for the current requirements. Record a verifiable approval reference under **Next steps**, or state **Awaiting human approval — implementation must not start**. Bot comments, automated labels, silence, and approval of an earlier requirement version do not approve the current scope.
-- Any downstream implementation workflow must independently verify human approval before starting. Skill wording alone cannot enforce that gate in another workflow. If applying an analysis label would automatically start implementation without that check, leave the label unapplied and report the workflow blocker.
+- This skill performs analysis, comment updates, and labeling. It does not itself implement the issue. Applying `ready-for-implementation` after human approval may trigger a separate implementation workflow.
+- Record the approval source under **Next steps**: the existing `ready-for-implementation` label or a reference to the explicit human approval comment. Bot-generated approval, silence, and approval of an earlier requirement version do not authorize setting the label for the current scope.
+- Any downstream implementation workflow must check that `ready-for-implementation` is currently present before starting. No additional confirmation is required when that approval label is present. Skill wording alone cannot enforce the check in another workflow.
 
 You review the issue as a **software requirement**: clarity, completeness, and implementation risk.
 
@@ -59,9 +60,9 @@ You review the issue as a **software requirement**: clarity, completeness, and i
 - Risks / open decisions: [bullets]
 
 ### Next steps
-- If **SUFFICIENT:** report the applied label `ready-for-implementation` (or the actual blocker) and suggest a feature branch name without creating it.
+- If **SUFFICIENT:** report whether `ready-for-implementation` is present after human approval or approval is still pending; report any label blocker and suggest a feature branch name without creating it.
 - If **NEEDS IMPROVEMENT:** report the applied label `needs-clarification` (or the actual blocker) and ask **specific questions** (not generic).
-- Human approval: [reference to explicit approval for the current requirements, or **Awaiting human approval — implementation must not start**].
+- Human approval: [`ready-for-implementation` present — implementation may start; reference the human approval comment if used, or **Awaiting human approval — implementation must not start**].
 
 ---
 _Automated analysis._
