@@ -60,15 +60,13 @@ jobs:
           permission-profile: issue-implementation
           model: 'gpt-5.6-luna'
           prompt: |
-            Use the ci-se-green skill in .codex/skills/ci-se-green/SKILL.md.
-            Read and follow that file before making changes.
+            U/ci-se-green
+                                 
+               ISSUE_NUMBER=${{ github.event.issue.number }}
+               ISSUE_TITLE="${{ github.event.issue.title }}"
+               
+                                 # Convert to lowercase and replace spaces with hyphens, format: feature/{number}-{title}
+               BRANCH_NAME=$(echo "feature/${ISSUE_NUMBER}-${ISSUE_TITLE}" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g' | sed 's/[^a-z0-9\-\/]//g')
 
-            REPO: ${{ github.repository }}
-            ISSUE_NUMBER: ${{ github.event.issue.number }}
-            BRANCH: ${{ steps.prepare-branch.outputs.branch_name }}
-
-            You are already on the feature branch named above.
-            Read the current issue and its discussion, including the latest analysis.
-            Verify that ready-for-implementation is still present before making changes.
-            If approval is missing or the skill prerequisites are not met, stop and
-            report the blocker without implementing changes.
+               git config user.name "github-actions[bot]"
+               git config user.email "github-actions[bot]@users.noreply.github.com"
