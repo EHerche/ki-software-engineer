@@ -60,7 +60,7 @@ jobs:
           permission-profile: issue-implementation
           model: 'gpt-5.6-luna'
           prompt: |
-            U/ci-se-green
+            /ci-se-green
                                  
                ISSUE_NUMBER=${{ github.event.issue.number }}
                ISSUE_TITLE="${{ github.event.issue.title }}"
