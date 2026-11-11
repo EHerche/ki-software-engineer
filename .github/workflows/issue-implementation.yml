@@ -58,6 +58,7 @@ jobs:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           codex-home: ${{ runner.temp }}/codex-issue-implementation
           permission-profile: issue-implementation
+          model: 'gpt-5.6-luna'
           prompt: |
             Use the ci-se-green skill in .codex/skills/ci-se-green/SKILL.md.
             Read and follow that file before making changes.
