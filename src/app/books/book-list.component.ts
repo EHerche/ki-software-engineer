@@ -3,13 +3,13 @@ import { afterNextRender, Component, ElementRef, inject, Input, Injector, ViewCh
 import { FormsModule } from '@angular/forms';
 import { catchError, map, Observable, of, startWith, Subject, switchMap, tap, timer } from 'rxjs';
 import { Book } from './book';
-import { BookApiClient } from './book-api-client.service';
+import { BookApiClient, BookFilters, BookSearchField, BookSort } from './book-api-client.service';
 import { BookItemComponent } from './book-item.component';
 import { BookCoverComponent } from './book-cover.component';
 import { BookPreviewComponent } from './book-preview.component';
 
 type BookListState = { status: 'loading' | 'error'; books: null } | { status: 'loaded'; books: Book[] };
-type SearchAction = { searchTerm: string; debounce: boolean };
+type SearchAction = { searchTerm: string; debounce: boolean; filters?: BookFilters };
 
 @Component({
   selector: 'app-book-list',
@@ -26,8 +26,11 @@ export class BookListComponent {
   @Input() pageSize = 10;
   @ViewChild('rouletteButton') private rouletteButton?: ElementRef<HTMLButtonElement>;
   searchTerm = '';
-  selectedBook: Book | null = null;
-  rouletteBook = false;
+  searchField: BookSearchField = 'all';
+  publisher = '';
+  sort: BookSort = 'default'
+  selectedBook: Book | null = null
+  rouletteBook = false;s
   rouletteRunning = false;
   rouletteStatus = '';
   rouletteMotionOverride = false;
@@ -39,7 +42,7 @@ export class BookListComponent {
   private selectedElement?: HTMLElement;
 
   readonly state$: Observable<BookListState> = this.searchActions.pipe(
-    startWith({ searchTerm: '', debounce: false }),
+    startWith<SearchAction>({ searchTerm: '', debounce: false }),
     // Switch before delaying so new input also cancels an active HTTP request immediately.
     tap(() => {
       this.cancelRoulette();
@@ -47,9 +50,9 @@ export class BookListComponent {
       this.cubeBooks = [];
       this.closePreview(false);
     }),
-    switchMap(({ searchTerm, debounce }) =>
+    switchMap(({ searchTerm, debounce, filters }) =>
       (debounce ? timer(300) : of(0)).pipe(
-        switchMap(() => this.bookApiClient.getBooks(this.pageSize, searchTerm)),
+        switchMap(() => this.bookApiClient.getBooks(this.pageSize, searchTerm, filters)),
         map((books): BookListState => ({ status: 'loaded', books })),
         tap(state => {
           this.availableBooks = state.status === 'loaded' ? state.books : [];
@@ -65,16 +68,40 @@ export class BookListComponent {
   );
 
   onSearchChange(): void {
-    this.searchActions.next({ searchTerm: this.searchTerm, debounce: true });
+    this.search(true);
+  }
+
+  onFilterChange(): void {
+    this.search(false);
+  }
+
+  get hasFilters(): boolean {
+    return !!(this.searchTerm || this.publisher || this.searchField !== 'all' || this.sort !== 'default');
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.searchField = 'all';
+    this.publisher = '';
+    this.sort = 'default';
+    this.search(false);
+  }
+
+  private search(debounce: boolean): void {
+    this.searchActions.next({
+      searchTerm: this.searchTerm,
+      debounce,
+      filters: { field: this.searchField, publisher: this.publisher, sort: this.sort }
+    });
   }
 
   clearSearch(): void {
     this.searchTerm = '';
-    this.searchActions.next({ searchTerm: '', debounce: false });
+    this.search(false);
   }
 
   retry(): void {
-    this.searchActions.next({ searchTerm: this.searchTerm, debounce: false });
+    this.search(false);
   }
 
   startRoulette(event?: Event, animate = this.animateRoulette): void {

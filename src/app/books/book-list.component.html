@@ -5,27 +5,64 @@
     <p class="text-muted">Find your next good read. Explore the collection.</p>
   </div>
 
-  <div class="mb-10 max-w-xl">
-    <label for="book-search" class="mb-2 block text-sm font-medium text-muted">Search the collection</label>
-    <div class="search-field flex items-center py-2">
-      <input
-        id="book-search"
-        type="text"
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="onSearchChange()"
-        placeholder="Search for books..."
-        class="appearance-none bg-transparent border-none w-full text-ink mr-3 py-1 px-2 leading-tight focus:outline-none"
-      />
-      <button
-        type="button"
-        aria-label="Clear search"
-        *ngIf="searchTerm"
-        (click)="clearSearch()"
-        class="flex-shrink-0 text-muted hover:text-ink"
-      >
-        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
+  <div class="collection-filters mb-10" role="search" aria-label="Book filters">
+    <div class="filter-search">
+      <label for="book-search" class="mb-2 block text-sm font-medium text-muted">Search the collection</label>
+      <div class="search-field flex items-center py-2">
+        <input
+          id="book-search"
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search for books..."
+          class="appearance-none bg-transparent border-none w-full text-ink mr-3 py-1 px-2 leading-tight focus:outline-none"
+        />
+        <button
+          type="button"
+          aria-label="Clear search"
+          *ngIf="searchTerm"
+          (click)="clearSearch()"
+          class="flex-shrink-0 text-muted hover:text-ink"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="filter-options">
+      <div>
+        <label for="search-field">Search in</label>
+        <select id="search-field" [(ngModel)]="searchField" (ngModelChange)="onFilterChange()">
+          <option value="all">All fields</option>
+          <option value="title">Title</option>
+          <option value="author">Author</option>
+          <option value="isbn">ISBN</option>
+        </select>
+      </div>
+      <div>
+        <label for="publisher-filter">Publisher</label>
+        <input
+          id="publisher-filter"
+          type="text"
+          [(ngModel)]="publisher"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Any publisher"
+        />
+      </div>
+      <div>
+        <label for="book-sort">Sort by</label>
+        <select id="book-sort" [(ngModel)]="sort" (ngModelChange)="onFilterChange()">
+          <option value="default">Original order</option>
+          <option value="title-asc">Title: A–Z</option>
+          <option value="title-desc">Title: Z–A</option>
+          <option value="author-asc">Author: A–Z</option>
+          <option value="pages-asc">Pages: fewest first</option>
+          <option value="pages-desc">Pages: most first</option>
+        </select>
+      </div>
+      <button type="button" class="filter-reset" [disabled]="!hasFilters" (click)="resetFilters()">
+        Reset filters
       </button>
     </div>
   </div>
@@ -143,10 +180,10 @@
           />
         </svg>
         <p class="text-xl font-medium text-muted mb-2">
-          {{ searchTerm ? 'No books match your search' : 'No books available' }}
+          {{ hasFilters ? 'No books match your search' : 'No books available' }}
         </p>
         <p class="text-muted">
-          {{ searchTerm ? 'Try different search terms or clear the search' : 'Check back later' }}
+          {{ hasFilters ? 'Try different search terms or reset the filters' : 'Check back later' }}
         </p>
         <button
           *ngIf="searchTerm"
@@ -154,6 +191,9 @@
           class="mt-4 bg-accent hover:bg-accent-hover text-on-accent font-medium py-2 px-4 rounded-md transition duration-200"
         >
           Clear Search
+        </button>
+        <button *ngIf="hasFilters && !searchTerm" type="button" (click)="resetFilters()" class="filter-reset mt-4">
+          Clear filters
         </button>
       </div>
     </div>

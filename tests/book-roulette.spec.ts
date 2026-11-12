@@ -124,14 +124,14 @@ test('search cancels animation and prevents a late result', async ({ page }) => 
   await openWithClock(page);
   await surprise(page).click();
   await page.clock.runFor(20);
-  await page.getByRole('textbox').fill('TypeScript');
+  await page.getByRole('textbox', { name: 'Search the collection', exact: true }).fill('TypeScript');
   await page.clock.runFor(2000);
   await page.clock.resume();
   await expect(page.getByRole('link', { name: secondBook.title, exact: true })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.roulette-cube.is-spinning')).toHaveCount(0);
   await expect(page.locator('#roulette-status')).toBeEmpty();
-  await expect(page.getByRole('textbox')).toBeFocused();
+  await expect(page.getByRole('textbox', { name: 'Search the collection', exact: true })).toBeFocused();
 });
 
 test('normal motion rolls visibly before the result opens', async ({ page }) => {
