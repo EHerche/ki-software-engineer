@@ -12,7 +12,9 @@ import { BookCoverComponent } from './book-cover.component';
 })
 export class BookPreviewComponent {
   @Input({ required: true }) book!: Book;
+  @Input() roulette = false;
   @Output() closed = new EventEmitter<void>();
+  @Output() reroll = new EventEmitter<void>();
   @ViewChild('closeButton') private closeButton?: ElementRef<HTMLButtonElement>;
 
   focusCloseButton(): void {
@@ -21,6 +23,10 @@ export class BookPreviewComponent {
 
   close(): void {
     this.closed.emit();
+  }
+
+  challengeFate(): void {
+    this.reroll.emit();
   }
 
   onKeydown(event: KeyboardEvent): void {

@@ -21,6 +21,7 @@
         <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
       </div>
       <div class="min-w-0">
+        <p *ngIf="roulette" class="eyebrow mb-2">This book chose you</p>
         <h2 id="preview-title" class="mb-2 text-2xl font-bold text-ink">{{ book.title }}</h2>
         <p class="mb-5 text-accent">{{ book.author }}</p>
         <p class="mb-6 whitespace-pre-line text-muted">{{ shortDescription }}</p>
@@ -31,6 +32,14 @@
         >
           View details
         </a>
+        <button
+          *ngIf="roulette"
+          type="button"
+          class="mt-3 ml-2 inline-flex rounded-md border border-line px-4 py-2 font-medium text-ink hover:bg-recessed focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          (click)="challengeFate()"
+        >
+          Das Schicksal herausfordern
+        </button>
       </div>
     </div>
   </section>

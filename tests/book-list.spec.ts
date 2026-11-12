@@ -200,7 +200,7 @@ for (const cover of ['missing', 'broken'] as const) {
     );
     await page.route('http://localhost:4730/covers/**', route => route.abort());
     await page.goto('/');
-    await expect(page.getByText('No cover available', { exact: true })).toBeVisible();
+    await expect(page.locator('.book-shelf').getByText('No cover available', { exact: true })).toBeVisible();
     await expect(page.getByRole('img')).toHaveCount(0);
   });
 }
@@ -209,8 +209,8 @@ test('a reused cover recovers when its parent supplies a new cover input', async
   await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [firstBook] }));
   await page.route(firstBook.cover, route => route.abort());
   await page.goto('/');
-  await expect(page.getByText('No cover available', { exact: true })).toBeVisible();
-  const cover = await page.locator('app-book-cover').elementHandle();
+  await expect(page.locator('.book-shelf').getByText('No cover available', { exact: true })).toBeVisible();
+  const cover = await page.locator('app-book-item app-book-cover').elementHandle();
   // Exercise the presentation input contract through its parent using Angular's dev-only debug API.
   await page.locator('app-book-item').evaluate((element, replacementCover) => {
     const angular = (
@@ -226,6 +226,6 @@ test('a reused cover recovers when its parent supplies a new cover input', async
     angular.applyChanges(card);
   }, 'http://localhost:4730/covers/recovered.svg');
   await expect(page.getByRole('img', { name: `Cover of ${firstBook.title}` })).toBeVisible();
-  await expect(page.getByText('No cover available', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.book-shelf').getByText('No cover available', { exact: true })).toHaveCount(0);
   expect(await cover!.evaluate(element => element.isConnected)).toBe(true);
 });

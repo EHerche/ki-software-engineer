@@ -30,6 +30,68 @@
     </div>
   </div>
 
+  <div class="roulette-panel mb-10">
+    <div
+      class="roulette-stage"
+      [class.is-rolling]="rouletteRunning"
+      [class.roulette-motion-opt-in]="rouletteRunning && rouletteMotionOverride"
+      aria-hidden="true"
+    >
+      <div
+        class="roulette-cube"
+        [class.is-spinning]="rouletteRunning"
+        [class.roulette-motion-opt-in]="rouletteRunning && rouletteMotionOverride"
+        [class.has-result]="rouletteBook"
+        (animationend)="onRouletteAnimationEnd($event)"
+      >
+        <div
+          *ngFor="let book of cubeBooks; let face = index"
+          class="cube-face"
+          [class.cube-front]="face === 0"
+          [class.cube-back]="face === 1"
+          [class.cube-right]="face === 2"
+          [class.cube-left]="face === 3"
+          [class.cube-top]="face === 4"
+          [class.cube-bottom]="face === 5"
+        >
+          <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
+          <span class="cube-title">{{ book.title }}</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow mb-2">Let fate choose</p>
+      <p class="mb-4 text-muted">
+        {{ rouletteRunning ? 'Rolling for your next read…' : 'One roll. Your next story.' }}
+      </p>
+      <button
+        #rouletteButton
+        type="button"
+        [disabled]="!availableBooks.length || rouletteRunning"
+        (click)="startRoulette($event, true)"
+        class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+      >
+        Überrasche mich!
+      </button>
+      <button
+        type="button"
+        [disabled]="!availableBooks.length || rouletteRunning"
+        (click)="startRoulette($event, false)"
+        class="mt-3 rounded-md border border-line px-4 py-2 font-medium text-ink hover:bg-recessed disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:ml-3"
+      >
+        Zieh eins!
+      </button>
+    </div>
+    <span
+      id="roulette-status"
+      [attr.role]="rouletteStatus ? 'status' : null"
+      aria-live="polite"
+      aria-atomic="true"
+      class="sr-only"
+      >{{ rouletteStatus }}</span
+    >
+  </div>
+
   <ng-container *ngIf="state$ | async as state">
     <div *ngIf="state.status === 'loading'" role="status" class="flex justify-center items-center py-20">
       <div class="motion-safe:animate-pulse flex flex-col items-center">
@@ -97,4 +159,10 @@
     </div>
   </ng-container>
 </div>
-<app-book-preview *ngIf="selectedBook as book" [book]="book" (closed)="closePreview()"></app-book-preview>
+<app-book-preview
+  *ngIf="selectedBook as book"
+  [book]="book"
+  [roulette]="rouletteBook"
+  (closed)="closePreview()"
+  (reroll)="startRoulette()"
+></app-book-preview>
