@@ -1,7 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { exec as execSync } from 'child_process';
-import { dirname } from 'path';
+import { readFile } from 'fs/promises';
+import { dirname, join } from 'path';
 import { promisify } from 'util';
 import { z } from 'zod';
 
@@ -9,6 +10,45 @@ const exec = promisify(execSync);
 
 // Initialize the MCP server with a name and version
 const server = new McpServer({ name: 'workshops-de-angular-mcp', version: '1.0.0' });
+
+server.registerTool(
+  'get_project_context',
+  {
+    title: 'Get BookMonkey Project Context',
+    description:
+      'Reads the current BookMonkey architecture, project rules, README and package.json, including project paths, dependencies, commands and environment limitations.',
+    inputSchema: {},
+    annotations: { readOnlyHint: true, openWorldHint: false }
+  },
+  async () => {
+    const projectRoot = dirname(dirname(__dirname));
+    const files = [
+      'ARCHITECTURE.md',
+      'AGENTS.md',
+      'src/AGENTS.md',
+      'src/app/books/AGENTS.md',
+      'README.md',
+      'package.json'
+    ];
+    const results = await Promise.all(
+      files.map(async file => {
+        try {
+          return { text: `# ${file}\n\n${await readFile(join(projectRoot, file), 'utf8')}`, failed: false };
+        } catch (error: unknown) {
+          return {
+            text: `Could not read ${file}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            failed: true
+          };
+        }
+      })
+    );
+
+    return {
+      content: results.map(result => ({ type: 'text' as const, text: result.text })),
+      isError: results.some(result => result.failed)
+    };
+  }
+);
 
 server.registerTool(
   'generate_component',
@@ -45,5 +85,5 @@ const transport = new StdioServerTransport();
 
 server
   .connect(transport)
-  .then(() =>  console.log('MCP server started'))
-  .catch(error =>  console.error('Error connecting to MCP server:', error));
+  .then(() => console.error('MCP server started'))
+  .catch(error => console.error('Error connecting to MCP server:', error));
