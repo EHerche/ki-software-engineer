@@ -125,7 +125,7 @@ Application regression coverage is in [details tests](tests/book-details.spec.ts
 
 [recreate-tags.sh](recreate-tags.sh) deletes matching local tags, rebuilds solution tags from commit messages, and deletes/pushes corresponding remote tags. It is a repository maintenance script with remote effects, not a normal contributor setup command.
 
-The [Auto-Fix workflow](.github/workflows/auto-fix.yml) listens for completed Build runs and attempts repairs only for failed pull-request runs whose head repository matches this repository. Push and manually dispatched builds do not trigger repairs. Its existing prompt and failure-notification job are unchanged. The final step currently only logs Git status; it does not push commits or create a fix PR, so publication is not yet implemented. The workflow files must be present on the default branch for the `workflow_run` chain and the manual Run workflow button to work.
+The [Auto-Fix workflow](.github/workflows/auto-fix.yml) listens for completed Build runs and attempts repairs for failed pull-request runs and failed push runs on `main`, provided the head repository matches this repository. Push builds on other branches and manually dispatched builds do not trigger repairs. Its existing prompt and failure-notification job are unchanged. The final step currently only logs Git status; it does not push commits or create a fix PR, so publication is not yet implemented. The workflow files must be present on the default branch for the `workflow_run` chain and the manual Run workflow button to work.
 
 ## Practical contributor guidance
 
