@@ -30,7 +30,7 @@ export class BookListComponent {
   publisher = '';
   sort: BookSort = 'default';
   selectedBook: Book | null = null;
-  rouletteBook = false;s
+  rouletteBook = false;
   rouletteRunning = false;
   rouletteStatus = '';
   rouletteMotionOverride = false;
