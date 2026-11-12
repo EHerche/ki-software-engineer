@@ -2,14 +2,17 @@ name: Auto-Fix CI Failures with Codex
 
 on:
   workflow_run:
-    workflows: ['Pull Request Review with Codex']
+    workflows: ['Build']
     types:
       - completed
 
 jobs:
   auto-fix:
-    # Only run if the CI workflow failed
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    # Only fix failed PR builds from this repository.
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
