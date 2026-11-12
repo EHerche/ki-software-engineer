@@ -18,28 +18,31 @@
     </button>
     <div class="grid gap-6 sm:grid-cols-[9rem_1fr]">
       <div class="aspect-[3/4] overflow-hidden rounded-lg bg-recessed">
-        <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
+        <app-book-cover [cover]="book().cover" [title]="book().title"></app-book-cover>
       </div>
       <div class="min-w-0">
-        <p *ngIf="roulette" class="eyebrow mb-2">This book chose you</p>
-        <h2 id="preview-title" class="mb-2 text-2xl font-bold text-ink">{{ book.title }}</h2>
-        <p class="mb-5 text-accent">{{ book.author }}</p>
-        <p class="mb-6 whitespace-pre-line text-muted">{{ shortDescription }}</p>
+        @if (roulette()) {
+          <p class="eyebrow mb-2">This book chose you</p>
+        }
+        <h2 id="preview-title" class="mb-2 text-2xl font-bold text-ink">{{ book().title }}</h2>
+        <p class="mb-5 text-accent">{{ book().author }}</p>
+        <p class="mb-6 whitespace-pre-line text-muted">{{ shortDescription() }}</p>
         <a
-          [routerLink]="['/books', book.id]"
+          [routerLink]="['/books', book().id]"
           class="inline-flex rounded-md bg-accent px-4 py-2 font-medium text-on-accent hover:bg-accent-hover"
           (click)="close()"
         >
           View details
         </a>
-        <button
-          *ngIf="roulette"
-          type="button"
-          class="mt-3 ml-2 inline-flex rounded-md border border-line px-4 py-2 font-medium text-ink hover:bg-recessed focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-          (click)="challengeFate()"
-        >
-          Das Schicksal herausfordern
-        </button>
+        @if (roulette()) {
+          <button
+            type="button"
+            class="mt-3 ml-2 inline-flex rounded-md border border-line px-4 py-2 font-medium text-ink hover:bg-recessed focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+            (click)="challengeFate()"
+          >
+            Das Schicksal herausfordern
+          </button>
+        }
       </div>
     </div>
   </section>

@@ -40,7 +40,7 @@ test('follows device changes until explicitly switched, then persists across nav
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.getByRole('link', { name: firstBook.title, exact: true }).click();
-  await expect(page.getByRole('heading', { name: firstBook.title, exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: firstBook.title, exact: true, level: 1 })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.reload();
   await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'false');

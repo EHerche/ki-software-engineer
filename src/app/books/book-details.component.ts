@@ -1,6 +1,14 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { afterNextRender, Component, ElementRef, inject, Injector, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  afterNextRender,
+  Component,
+  ElementRef,
+  inject,
+  Injector,
+  viewChild
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   catchError,
@@ -25,8 +33,8 @@ type EditAction = { type: 'edit' | 'cancel' } | { type: 'saved'; book: Book };
 
 @Component({
   selector: 'app-book-details',
-  standalone: true,
-  imports: [CommonModule, RouterLink, BookCoverComponent, BookEditComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AsyncPipe, RouterLink, BookCoverComponent, BookEditComponent],
   templateUrl: './book-details.component.html'
 })
 export class BookDetailsComponent {
@@ -36,8 +44,8 @@ export class BookDetailsComponent {
   private readonly retryRequests = new Subject<void>();
   private readonly editActions = new Subject<EditAction>();
 
-  @ViewChild('editButton') private editButton?: ElementRef<HTMLButtonElement>;
-  @ViewChild('editor', { read: ElementRef }) private editor?: ElementRef<HTMLElement>;
+  private readonly editButton = viewChild<ElementRef<HTMLButtonElement>>('editButton');
+  private readonly editor = viewChild<BookEditComponent, ElementRef<HTMLElement>>('editor', { read: ElementRef });
 
   readonly state$: Observable<BookDetailsState> = combineLatest([
     this.route.paramMap.pipe(
@@ -80,7 +88,7 @@ export class BookDetailsComponent {
 
   edit(): void {
     this.editActions.next({ type: 'edit' });
-    afterNextRender(() => this.editor?.nativeElement.querySelector<HTMLInputElement>('#edit-title')?.focus(), {
+    afterNextRender(() => this.editor()?.nativeElement.querySelector<HTMLInputElement>('#edit-title')?.focus(), {
       injector: this.injector
     });
   }
@@ -96,6 +104,6 @@ export class BookDetailsComponent {
   }
 
   private focusEditButton(): void {
-    afterNextRender(() => this.editButton?.nativeElement.focus(), { injector: this.injector });
+    afterNextRender(() => this.editButton()?.nativeElement.focus(), { injector: this.injector });
   }
 }

@@ -1,38 +1,30 @@
-import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angular/core';
 
 @Component({
   selector: 'app-book-cover',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block h-full w-full' },
   template: `
-    <img
-      *ngIf="cover && !failed; else noCover"
-      [src]="cover"
-      [alt]="'Cover of ' + title"
-      (error)="onImageError()"
-      class="h-full w-full object-contain bg-recessed"
-    />
-    <ng-template #noCover>
+    @if (cover() && !failed()) {
+      <img
+        [src]="cover()"
+        [alt]="'Cover of ' + title()"
+        (error)="onImageError()"
+        class="h-full w-full object-contain bg-recessed"
+      />
+    } @else {
       <div class="flex h-full items-center justify-center bg-recessed p-6 text-center text-muted">
         No cover available
       </div>
-    </ng-template>
+    }
   `
 })
-export class BookCoverComponent implements OnChanges {
-  @Input({ required: true }) cover = '';
-  @Input({ required: true }) title = '';
-  protected failed = false;
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['cover']) {
-      this.failed = false;
-    }
-  }
+export class BookCoverComponent {
+  readonly cover = input.required<string>();
+  readonly title = input.required<string>();
+  protected readonly failed = linkedSignal({ source: this.cover, computation: () => false });
 
   protected onImageError(): void {
-    this.failed = true;
+    this.failed.set(true);
   }
 }

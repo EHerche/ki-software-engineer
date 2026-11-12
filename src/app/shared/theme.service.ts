@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal, computed } from '@angular/core';
 
 type Theme = 'light' | 'dark';
 
@@ -9,11 +9,9 @@ export class ThemeService {
   private readonly destroyRef = inject(DestroyRef);
   private preference: Theme | null = null;
   private initialized = false;
-  private theme: Theme = 'light';
+  private readonly theme = signal<Theme>('light');
 
-  get isDark(): boolean {
-    return this.theme === 'dark';
-  }
+  readonly isDark = computed(() => this.theme() === 'dark');
 
   initialize(): void {
     if (this.initialized) return;
@@ -36,7 +34,7 @@ export class ThemeService {
   }
 
   toggle(): void {
-    this.preference = this.isDark ? 'light' : 'dark';
+    this.preference = this.isDark() ? 'light' : 'dark';
     this.apply(this.preference);
     try {
       this.document.defaultView?.localStorage.setItem('bookmonkey-theme', this.preference);
@@ -46,7 +44,7 @@ export class ThemeService {
   }
 
   private apply(theme: Theme): void {
-    this.theme = theme;
+    this.theme.set(theme);
     this.document.documentElement.dataset['theme'] = theme;
   }
 }

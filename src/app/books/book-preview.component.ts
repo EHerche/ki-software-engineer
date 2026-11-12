@@ -1,24 +1,23 @@
-import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, computed, Component, ElementRef, viewChild, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Book } from './book';
 import { BookCoverComponent } from './book-cover.component';
 
 @Component({
   selector: 'app-book-preview',
-  standalone: true,
-  imports: [CommonModule, RouterLink, BookCoverComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, BookCoverComponent],
   templateUrl: './book-preview.component.html'
 })
 export class BookPreviewComponent {
-  @Input({ required: true }) book!: Book;
-  @Input() roulette = false;
-  @Output() closed = new EventEmitter<void>();
-  @Output() reroll = new EventEmitter<void>();
-  @ViewChild('closeButton') private closeButton?: ElementRef<HTMLButtonElement>;
+  readonly book = input.required<Book>();
+  readonly roulette = input(false);
+  readonly closed = output<void>();
+  readonly reroll = output<void>();
+  private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
 
   focusCloseButton(): void {
-    this.closeButton?.nativeElement.focus();
+    this.closeButton()?.nativeElement.focus();
   }
 
   close(): void {
@@ -38,9 +37,7 @@ export class BookPreviewComponent {
 
     if (event.key !== 'Tab') return;
 
-    const focusable = Array.from(
-      (event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('button, a[href]')
-    );
+    const focusable = Array.from((event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('button, a[href]'));
     if (!focusable.length) return;
 
     const first = focusable[0];
@@ -54,7 +51,5 @@ export class BookPreviewComponent {
     }
   }
 
-  get shortDescription(): string {
-    return this.book.abstract.slice(0, 300);
-  }
+  readonly shortDescription = computed(() => this.book().abstract.slice(0, 300));
 }

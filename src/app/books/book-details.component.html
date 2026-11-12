@@ -7,53 +7,51 @@
     Back to collection
   </a>
 
-  <ng-container *ngIf="state$ | async as state">
-    <div *ngIf="state.status === 'loading'" role="status" class="flex items-center justify-center gap-3 py-20">
-      <span
-        aria-hidden="true"
-        class="h-8 w-8 animate-spin rounded-full border-4 border-line border-t-accent motion-reduce:animate-none"
-      ></span>
-      <p class="text-muted">Loading book...</p>
-    </div>
-
-    <section *ngIf="state.status === 'not-found'" role="alert" class="rounded-xl bg-surface p-8 text-center">
-      <h1 class="mb-3 text-2xl font-bold text-ink">Book not found</h1>
-      <p class="text-muted">This book is unavailable. Return to the collection to choose another book.</p>
-    </section>
-
-    <section *ngIf="state.status === 'error'" role="alert" class="rounded-xl bg-surface p-8 text-center">
-      <h1 class="mb-3 text-2xl font-bold text-ink">Unable to load book</h1>
-      <p class="mb-6 text-muted">Please try again.</p>
-      <button
-        type="button"
-        (click)="retry()"
-        class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-      >
-        Retry
-      </button>
-    </section>
-
-    <ng-container *ngIf="state.book as book">
-      <app-book-edit
-        *ngIf="state.editing; else bookDetails"
-        #editor
-        [book]="book"
-        (saved)="bookSaved($event)"
-        (cancelled)="cancelEdit()"
-      ></app-book-edit>
-      <ng-template #bookDetails>
+  @if (state$ | async; as state) {
+    @if (state.status === 'loading') {
+      <div role="status" class="flex items-center justify-center gap-3 py-20">
+        <span
+          aria-hidden="true"
+          class="h-8 w-8 animate-spin rounded-full border-4 border-line border-t-accent motion-reduce:animate-none"
+        ></span>
+        <p class="text-muted">Loading book...</p>
+      </div>
+    }
+    @if (state.status === 'not-found') {
+      <section role="alert" class="rounded-xl bg-surface p-8 text-center">
+        <h1 class="mb-3 text-2xl font-bold text-ink">Book not found</h1>
+        <p class="text-muted">This book is unavailable. Return to the collection to choose another book.</p>
+      </section>
+    }
+    @if (state.status === 'error') {
+      <section role="alert" class="rounded-xl bg-surface p-8 text-center">
+        <h1 class="mb-3 text-2xl font-bold text-ink">Unable to load book</h1>
+        <p class="mb-6 text-muted">Please try again.</p>
+        <button
+          type="button"
+          (click)="retry()"
+          class="rounded-md bg-accent px-5 py-2 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        >
+          Retry
+        </button>
+      </section>
+    }
+    @if (state.book; as book) {
+      @if (state.editing) {
+        <app-book-edit #editor [book]="book" (saved)="bookSaved($event)" (cancelled)="cancelEdit()"></app-book-edit>
+      } @else {
         <article aria-labelledby="book-title" class="grid gap-8 md:grid-cols-[16rem_1fr]">
           <div
             class="mx-auto aspect-[3/4] w-full max-w-xs self-start overflow-hidden rounded-xl border border-line bg-recessed"
           >
             <app-book-cover [cover]="book.cover" [title]="book.title"></app-book-cover>
           </div>
-
           <div class="min-w-0 break-words">
             <h1 id="book-title" class="mb-3 text-3xl font-bold text-ink">{{ book.title }}</h1>
-            <p *ngIf="book.subtitle" class="mb-4 text-xl text-muted">{{ book.subtitle }}</p>
+            @if (book.subtitle) {
+              <p class="mb-4 text-xl text-muted">{{ book.subtitle }}</p>
+            }
             <p class="mb-8 text-lg text-accent">{{ book.author }}</p>
-
             <button
               #editButton
               type="button"
@@ -62,7 +60,6 @@
             >
               Edit book
             </button>
-
             <dl class="grid grid-cols-1 gap-5 border-y border-line py-6 sm:grid-cols-2">
               <div>
                 <dt class="text-sm font-medium text-muted">ISBN</dt>
@@ -81,14 +78,13 @@
                 <dd class="mt-1 text-ink">{{ book.price }}</dd>
               </div>
             </dl>
-
             <section class="mt-8" aria-labelledby="book-abstract">
               <h2 id="book-abstract" class="mb-3 text-xl font-semibold text-ink">About this book</h2>
               <p class="whitespace-pre-line leading-relaxed text-ink">{{ book.abstract }}</p>
             </section>
           </div>
         </article>
-      </ng-template>
-    </ng-container>
-  </ng-container>
+      }
+    }
+  }
 </div>

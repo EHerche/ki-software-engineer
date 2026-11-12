@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, OnChanges, Output } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, OnChanges, input, output } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
 import { catchError, exhaustMap, map, Observable, of, startWith, Subject, tap } from 'rxjs';
 import { Book } from './book';
@@ -13,8 +13,8 @@ const requiredText: ValidatorFn = control =>
 
 @Component({
   selector: 'app-book-edit',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AsyncPipe, ReactiveFormsModule],
   templateUrl: './book-edit.component.html',
   styleUrl: './book-edit.component.css'
 })
@@ -23,9 +23,9 @@ export class BookEditComponent implements OnChanges {
   private readonly formBuilder = inject(FormBuilder).nonNullable;
   private readonly saveRequests = new Subject<BookChanges>();
 
-  @Input({ required: true }) book!: Book;
-  @Output() readonly saved = new EventEmitter<Book>();
-  @Output() readonly cancelled = new EventEmitter<void>();
+  readonly book = input.required<Book>();
+  readonly saved = output<Book>();
+  readonly cancelled = output<void>();
 
   readonly form = this.formBuilder.group({
     title: ['', requiredText],
@@ -40,7 +40,7 @@ export class BookEditComponent implements OnChanges {
 
   readonly saveState$: Observable<SaveState> = this.saveRequests.pipe(
     exhaustMap(changes =>
-      this.bookApiClient.updateBook(this.book, changes).pipe(
+      this.bookApiClient.updateBook(this.book(), changes).pipe(
         tap(book => this.saved.emit(book)),
         map((): SaveState => 'idle'),
         catchError(() => of<SaveState>('error')),
@@ -51,7 +51,7 @@ export class BookEditComponent implements OnChanges {
   );
 
   ngOnChanges(): void {
-    this.form.reset({ ...this.book, subtitle: this.book.subtitle ?? '' });
+    this.form.reset({ ...this.book(), subtitle: this.book().subtitle ?? '' });
   }
 
   invalid(field: RequiredField): boolean {

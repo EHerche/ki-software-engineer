@@ -2,91 +2,101 @@
   <h1 id="edit-book-title" class="mb-2 text-3xl font-bold text-ink">Edit book</h1>
   <p class="mb-6 text-muted">Update the book information. Fields marked * are required.</p>
 
-  <form *ngIf="saveState$ | async as state" [formGroup]="form" (ngSubmit)="save()" novalidate>
-    <fieldset [disabled]="state === 'saving'" [attr.aria-busy]="state === 'saving'">
-      <legend class="sr-only">Book information</legend>
-      <div class="grid min-w-0 gap-5 sm:grid-cols-2">
-        <div class="sm:col-span-2">
-          <label for="edit-isbn">ISBN (read-only)</label>
-          <input id="edit-isbn" type="text" [value]="book.isbn" readonly aria-describedby="isbn-help" />
-          <p id="isbn-help" class="mt-1 text-sm text-muted">The ISBN cannot be changed.</p>
+  @if (saveState$ | async; as state) {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <fieldset [disabled]="state === 'saving'" [attr.aria-busy]="state === 'saving'">
+        <legend class="sr-only">Book information</legend>
+        <div class="grid min-w-0 gap-5 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label for="edit-isbn">ISBN (read-only)</label>
+            <input id="edit-isbn" type="text" [value]="book().isbn" readonly aria-describedby="isbn-help" />
+            <p id="isbn-help" class="mt-1 text-sm text-muted">The ISBN cannot be changed.</p>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="edit-title">Title *</label>
+            <input
+              id="edit-title"
+              type="text"
+              formControlName="title"
+              required
+              [attr.aria-invalid]="invalid('title')"
+              [attr.aria-describedby]="invalid('title') ? 'title-error' : null"
+            />
+            @if (invalid('title')) {
+              <p id="title-error" class="field-error">Enter a title.</p>
+            }
+          </div>
+          <div class="sm:col-span-2">
+            <label for="edit-subtitle">Subtitle</label>
+            <input id="edit-subtitle" type="text" formControlName="subtitle" />
+          </div>
+          <div>
+            <label for="edit-author">Author</label>
+            <input id="edit-author" type="text" formControlName="author" />
+          </div>
+          <div>
+            <label for="edit-publisher">Publisher *</label>
+            <input
+              id="edit-publisher"
+              type="text"
+              formControlName="publisher"
+              required
+              [attr.aria-invalid]="invalid('publisher')"
+              [attr.aria-describedby]="invalid('publisher') ? 'publisher-error' : null"
+            />
+            @if (invalid('publisher')) {
+              <p id="publisher-error" class="field-error">Enter a publisher.</p>
+            }
+          </div>
+          <div>
+            <label for="edit-pages">Pages</label>
+            <input id="edit-pages" type="number" step="any" formControlName="numPages" aria-describedby="pages-help" />
+            <p id="pages-help" class="mt-1 text-sm text-muted">Leave blank to use 0.</p>
+          </div>
+          <div>
+            <label for="edit-price">Price</label>
+            <input id="edit-price" type="text" formControlName="price" />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="edit-cover">Cover URL</label>
+            <input id="edit-cover" type="text" inputmode="url" formControlName="cover" />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="edit-abstract">Description *</label>
+            <textarea
+              id="edit-abstract"
+              rows="7"
+              formControlName="abstract"
+              required
+              [attr.aria-invalid]="invalid('abstract')"
+              [attr.aria-describedby]="invalid('abstract') ? 'abstract-error' : null"
+            ></textarea>
+            @if (invalid('abstract')) {
+              <p id="abstract-error" class="field-error">Enter a description.</p>
+            }
+          </div>
         </div>
-        <div class="sm:col-span-2">
-          <label for="edit-title">Title *</label>
-          <input
-            id="edit-title"
-            type="text"
-            formControlName="title"
-            required
-            [attr.aria-invalid]="invalid('title')"
-            [attr.aria-describedby]="invalid('title') ? 'title-error' : null"
-          />
-          <p *ngIf="invalid('title')" id="title-error" class="field-error">Enter a title.</p>
+        @if (state === 'error') {
+          <p role="alert" class="mt-6 font-medium text-ink">
+            Unable to save the book. Your changes are still here. Please try saving again.
+          </p>
+        }
+        @if (state === 'saving') {
+          <p role="status" class="mt-6 text-muted">Saving book...</p>
+        }
+        <div class="mt-8 flex flex-wrap gap-3">
+          <button type="submit" class="rounded-md bg-accent px-5 py-3 font-medium text-on-accent hover:bg-accent-hover">
+            {{ state === 'saving' ? 'Saving...' : 'Save changes' }}
+          </button>
+          <button
+            type="button"
+            (click)="cancelled.emit()"
+            class="rounded-md border border-line px-5 py-3 font-medium text-ink hover:bg-recessed"
+          >
+            Cancel
+          </button>
         </div>
-        <div class="sm:col-span-2">
-          <label for="edit-subtitle">Subtitle</label>
-          <input id="edit-subtitle" type="text" formControlName="subtitle" />
-        </div>
-        <div>
-          <label for="edit-author">Author</label>
-          <input id="edit-author" type="text" formControlName="author" />
-        </div>
-        <div>
-          <label for="edit-publisher">Publisher *</label>
-          <input
-            id="edit-publisher"
-            type="text"
-            formControlName="publisher"
-            required
-            [attr.aria-invalid]="invalid('publisher')"
-            [attr.aria-describedby]="invalid('publisher') ? 'publisher-error' : null"
-          />
-          <p *ngIf="invalid('publisher')" id="publisher-error" class="field-error">Enter a publisher.</p>
-        </div>
-        <div>
-          <label for="edit-pages">Pages</label>
-          <input id="edit-pages" type="number" step="any" formControlName="numPages" aria-describedby="pages-help" />
-          <p id="pages-help" class="mt-1 text-sm text-muted">Leave blank to use 0.</p>
-        </div>
-        <div>
-          <label for="edit-price">Price</label>
-          <input id="edit-price" type="text" formControlName="price" />
-        </div>
-        <div class="sm:col-span-2">
-          <label for="edit-cover">Cover URL</label>
-          <input id="edit-cover" type="text" inputmode="url" formControlName="cover" />
-        </div>
-        <div class="sm:col-span-2">
-          <label for="edit-abstract">Description *</label>
-          <textarea
-            id="edit-abstract"
-            rows="7"
-            formControlName="abstract"
-            required
-            [attr.aria-invalid]="invalid('abstract')"
-            [attr.aria-describedby]="invalid('abstract') ? 'abstract-error' : null"
-          ></textarea>
-          <p *ngIf="invalid('abstract')" id="abstract-error" class="field-error">Enter a description.</p>
-        </div>
-      </div>
-
-      <p *ngIf="state === 'error'" role="alert" class="mt-6 font-medium text-ink">
-        Unable to save the book. Your changes are still here. Please try saving again.
-      </p>
-      <p *ngIf="state === 'saving'" role="status" class="mt-6 text-muted">Saving book...</p>
-
-      <div class="mt-8 flex flex-wrap gap-3">
-        <button type="submit" class="rounded-md bg-accent px-5 py-3 font-medium text-on-accent hover:bg-accent-hover">
-          {{ state === 'saving' ? 'Saving...' : 'Save changes' }}
-        </button>
-        <button
-          type="button"
-          (click)="cancelled.emit()"
-          class="rounded-md border border-line px-5 py-3 font-medium text-ink hover:bg-recessed"
-        >
-          Cancel
-        </button>
-      </div>
-    </fieldset>
-  </form>
+      </fieldset>
+    </form>
+  }
 </section>

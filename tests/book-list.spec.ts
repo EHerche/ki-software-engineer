@@ -216,13 +216,13 @@ test('a reused cover recovers when its parent supplies a new cover input', async
     const angular = (
       window as unknown as {
         ng: {
-          getComponent(element: Element): { book: Book };
+          getComponent(element: Element): { book(): Book };
           applyChanges(component: object): void;
         };
       }
     ).ng;
     const card = angular.getComponent(element);
-    card.book = { ...card.book, cover: replacementCover };
+    card.book().cover = replacementCover;
     angular.applyChanges(card);
   }, 'http://localhost:4730/covers/recovered.svg');
   await expect(page.getByRole('img', { name: `Cover of ${firstBook.title}` })).toBeVisible();
