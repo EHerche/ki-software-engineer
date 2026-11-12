@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { afterNextRender, Component, inject, Input, Injector } from '@angular/core';
+import { afterNextRender, Component, ElementRef, inject, Input, Injector, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { catchError, map, Observable, of, startWith, Subject, switchMap, tap, timer } from 'rxjs';
 import { Book } from './book';
@@ -24,14 +24,17 @@ export class BookListComponent {
   private readonly searchActions = new Subject<SearchAction>();
 
   @Input() pageSize = 10;
+  @ViewChild('rouletteButton') private rouletteButton?: ElementRef<HTMLButtonElement>;
   searchTerm = '';
   selectedBook: Book | null = null;
   rouletteBook = false;
   rouletteRunning = false;
   rouletteStatus = '';
+  rouletteMotionOverride = false;
   availableBooks: Book[] = [];
   cubeBooks: Book[] = [];
   private pendingRouletteBook: Book | null = null;
+  private animateRoulette = true;
   private lastRouletteBookId?: string;
   private selectedElement?: HTMLElement;
 
@@ -74,12 +77,14 @@ export class BookListComponent {
     this.searchActions.next({ searchTerm: this.searchTerm, debounce: false });
   }
 
-  startRoulette(event?: Event): void {
+  startRoulette(event?: Event, animate = this.animateRoulette): void {
     if (this.rouletteRunning || !this.availableBooks.length) return;
+    this.animateRoulette = animate;
 
     const trigger = event?.currentTarget;
     const returnElement = trigger instanceof HTMLElement ? trigger : this.selectedElement;
     this.closePreview(false);
+    this.rouletteMotionOverride = animate;
     this.selectedElement = returnElement;
     this.pendingRouletteBook = this.randomBook(this.availableBooks, this.lastRouletteBookId);
     if (!this.pendingRouletteBook) return;
@@ -90,6 +95,7 @@ export class BookListComponent {
     ]);
     this.rouletteRunning = true;
     this.rouletteStatus = 'Choosing a book...';
+    if (!animate) this.finishRoulette();
   }
 
   onRouletteAnimationEnd(event: AnimationEvent): void {
@@ -109,6 +115,7 @@ export class BookListComponent {
     this.lastRouletteBookId = book.id;
     this.pendingRouletteBook = null;
     this.rouletteRunning = false;
+    this.rouletteMotionOverride = false;
     this.rouletteBook = true;
     this.selectedBook = book;
     this.rouletteStatus = `This book chose you: ${book.title}.`;
@@ -122,6 +129,7 @@ export class BookListComponent {
 
   private cancelRoulette(): void {
     this.rouletteRunning = false;
+    this.rouletteMotionOverride = false;
     this.pendingRouletteBook = null;
     this.rouletteStatus = '';
   }
@@ -159,6 +167,10 @@ export class BookListComponent {
     this.selectedBook = null;
     this.rouletteBook = false;
     this.selectedElement = undefined;
-    if (restoreFocus) afterNextRender(() => element?.focus(), { injector: this.injector });
+    if (restoreFocus) {
+      afterNextRender(() => (element?.isConnected ? element : this.rouletteButton?.nativeElement)?.focus(), {
+        injector: this.injector
+      });
+    }
   }
 }

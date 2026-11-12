@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { apiUrl, expect, firstBook, secondBook, test } from './fixtures/books';
 
 const surprise = (page: Page) => page.getByRole('button', { name: 'Überrasche mich!', exact: true });
+const draw = (page: Page) => page.getByRole('button', { name: 'Zieh eins!', exact: true });
 const reroll = (page: Page) => page.getByRole('button', { name: 'Das Schicksal herausfordern', exact: true });
 
 test('book covers form six cube faces and the roll lands on the announced book', async ({ page }) => {
@@ -133,38 +134,124 @@ test('search cancels animation and prevents a late result', async ({ page }) => 
   await expect(page.getByRole('textbox')).toBeFocused();
 });
 
-for (const reducedMotion of ['no-preference', 'reduce'] as const) {
-  test(`always rolls visibly with motion preference ${reducedMotion}`, async ({ page }) => {
-    await page.emulateMedia({ reducedMotion });
-    await page.goto('/');
+test('normal motion rolls visibly before the result opens', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  await surprise(page).click();
+  const cube = page.locator('.roulette-cube');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(cube).toHaveClass(/is-spinning/);
+  await expect(cube).toHaveCSS('animation-name', /roulette-roll/);
+  const initialTransform = await cube.evaluate(element => getComputedStyle(element).transform);
+  await expect
+    .poll(() => page.locator('.roulette-cube.is-spinning').evaluate(element => getComputedStyle(element).transform))
+    .not.toBe(initialTransform);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
+
+for (const motion of ['no-preference', 'reduce'] as const) {
+  test(`direct draw and reroll are immediate with motion preference ${motion}`, async ({ page }) => {
+    await openWithClock(page);
+    await page.emulateMedia({ reducedMotion: motion });
+    await draw(page).click();
+    await page.clock.runFor(20);
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('.roulette-cube')).not.toHaveClass(/is-spinning/);
+    const title = await dialog.getByRole('heading').innerText();
+    await expect(page.locator('#roulette-status')).toContainText(title);
+    await expect(page.getByRole('button', { name: 'Close preview' })).toBeFocused();
+    await reroll(page).click();
+    await page.clock.runFor(20);
+    await expect(dialog.getByRole('heading')).not.toHaveText(title);
+    await expect(page.locator('.roulette-cube')).not.toHaveClass(/is-spinning/);
+    await page.keyboard.press('Escape');
+    await page.clock.runFor(20);
+    await expect(draw(page)).toBeFocused();
     await surprise(page).click();
-    const cube = page.locator('.roulette-cube');
+    await page.clock.runFor(20);
+    await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
+    await expect(page.locator('.roulette-cube')).toHaveCSS('animation-name', /roulette-roll/);
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(cube).toHaveClass(/is-spinning/);
-    await expect(cube).toHaveCSS('animation-name', /roulette-roll/);
-    const initialTransform = await cube.evaluate(element => getComputedStyle(element).transform);
-    await expect
-      .poll(() => page.locator('.roulette-cube.is-spinning').evaluate(element => getComputedStyle(element).transform))
-      .not.toBe(initialTransform);
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await finishRoll(page);
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 }
 
-test('changing system motion preference keeps the explicit roll running', async ({ page }) => {
-  await openWithClock(page);
-  await surprise(page).click();
-  await page.clock.runFor(20);
-  await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
+test('surprise animates under reduced motion and direct draw stays immediate', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 375, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const optIn = page.getByRole('button', { name: 'Überrasche mich!', exact: true });
+  await optIn.click();
+  const cube = page.locator('.roulette-cube');
+  await expect(cube).toHaveClass(/is-spinning/);
+  await expect(cube).toHaveCSS('animation-name', /roulette-roll/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('opt-in-animation.png') });
+  const transform = await cube.evaluate(element => getComputedStyle(element).transform);
+  await expect
+    .poll(() => page.locator('.roulette-cube.is-spinning').evaluate(element => getComputedStyle(element).transform))
+    .not.toBe(transform);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(optIn).toBeFocused();
+  await page.clock.install();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  await draw(page).click();
   await page.clock.runFor(20);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(cube).not.toHaveClass(/is-spinning/);
+});
+
+test('surprise keeps animating through preference changes and restores focus', async ({ page }) => {
+  await openWithClock(page);
+  await page.clock.resume();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const optIn = page.getByRole('button', { name: 'Überrasche mich!', exact: true });
+  await expect(optIn).toBeVisible();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  await optIn.click();
+  await page.clock.runFor(20);
+  await page
+    .locator('.roulette-cube')
+    .evaluate(element => element.getAnimations().forEach(animation => animation.pause()));
+  await page.clock.resume();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(optIn).toBeVisible();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(optIn).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
   await expect(page.locator('.roulette-cube')).toHaveCSS('animation-name', /roulette-roll/);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(optIn).toBeVisible();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   await finishRoll(page);
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(surprise(page)).toBeEnabled();
-  await expect(page.locator('.roulette-cube')).not.toHaveClass(/is-spinning/);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(20);
+  await expect(surprise(page)).toBeFocused();
+});
+
+test('manual preview cancels an opted-in roll and clears its motion exception', async ({ page }) => {
+  await openWithClock(page);
+  await page.clock.resume();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.getByRole('button', { name: 'Überrasche mich!', exact: true })).toBeVisible();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  await page.getByRole('button', { name: 'Überrasche mich!', exact: true }).click();
+  await page.clock.runFor(20);
+  const book = page.getByRole('button', { name: `Preview ${firstBook.title}`, exact: true });
+  await book.click();
+  await page.clock.runFor(20);
+  await expect(page.getByRole('dialog')).toContainText(firstBook.title);
+  await expect(page.locator('.roulette-motion-opt-in')).toHaveCount(0);
+  await expect(reroll(page)).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(20);
+  await expect(book).toBeFocused();
 });
 
 test('waits for the real animation end instead of opening the dialog on a timer', async ({ page }) => {

@@ -449,7 +449,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *:not(.roulette-cube):not(.roulette-stage),
+  *:not(.roulette-motion-opt-in),
   *::before,
   *::after {
     animation: none !important;
