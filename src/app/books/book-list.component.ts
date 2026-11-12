@@ -28,8 +28,8 @@ export class BookListComponent {
   searchTerm = '';
   searchField: BookSearchField = 'all';
   publisher = '';
-  sort: BookSort = 'default'
-  selectedBook: Book | null = null
+  sort: BookSort = 'default';
+  selectedBook: Book | null = null;
   rouletteBook = false;s
   rouletteRunning = false;
   rouletteStatus = '';
