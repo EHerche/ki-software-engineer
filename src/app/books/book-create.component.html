@@ -1,0 +1,14 @@
+<div class="container mx-auto max-w-4xl px-4 py-12">
+  @if (state$ | async; as state) {
+    <app-book-form
+      mode="create"
+      [initialValue]="initialValue"
+      [pending]="state === 'saving'"
+      [error]="
+        state === 'error' ? 'Unable to save the book. Your changes are still here. Please try saving again.' : null
+      "
+      (submitted)="create($event)"
+      (cancelled)="cancel()"
+    />
+  }
+</div>

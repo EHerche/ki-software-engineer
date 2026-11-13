@@ -1,0 +1,21 @@
+<nav aria-label="Collection pages" class="my-8 flex flex-wrap items-center justify-center gap-4">
+  <button
+    type="button"
+    aria-label="Previous page"
+    [disabled]="page() <= 1"
+    (click)="pageRequested.emit(page() - 1)"
+    class="rounded-md border border-line px-4 py-2 text-ink hover:bg-recessed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+  >
+    Previous
+  </button>
+  <p aria-live="polite" class="text-muted">Page {{ page() }} of {{ pages() }}</p>
+  <button
+    type="button"
+    aria-label="Next page"
+    [disabled]="page() >= pages()"
+    (click)="pageRequested.emit(page() + 1)"
+    class="rounded-md border border-line px-4 py-2 text-ink hover:bg-recessed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+  >
+    Next
+  </button>
+</nav>

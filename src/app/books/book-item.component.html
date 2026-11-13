@@ -21,7 +21,7 @@
   </button>
   <div class="shelf-label">
     <h2>
-      <a [routerLink]="['/books', book().id]">{{ book().title }}</a>
+      <a [routerLink]="['/books', book().id]" [queryParams]="collectionQuery()">{{ book().title }}</a>
     </h2>
     <p>{{ book().author }}</p>
   </div>

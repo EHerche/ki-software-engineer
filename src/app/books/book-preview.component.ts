@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, computed, Component, ElementRef, viewChild, in
 import { RouterLink } from '@angular/router';
 import { Book } from './book';
 import { BookCoverComponent } from './book-cover.component';
+import { BookCollectionParams } from './book-collection-query';
 
 @Component({
   selector: 'app-book-preview',
@@ -12,6 +13,7 @@ import { BookCoverComponent } from './book-cover.component';
 export class BookPreviewComponent {
   readonly book = input.required<Book>();
   readonly roulette = input(false);
+  readonly collectionQuery = input<BookCollectionParams>({});
   readonly closed = output<void>();
   readonly reroll = output<void>();
   private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');

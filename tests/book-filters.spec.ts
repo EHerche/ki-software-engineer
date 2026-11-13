@@ -1,4 +1,4 @@
-import { apiUrl, expect, firstBook, secondBook, test } from './fixtures/books';
+import { apiUrl, booksResponse, expect, firstBook, secondBook, test } from './fixtures/books';
 
 for (const field of ['title', 'author', 'isbn']) {
   test(`searches only the selected ${field} field and escapes literal input`, async ({ page }) => {
@@ -21,7 +21,7 @@ test('combines publisher, full text and sorting, retains filters on retry and re
   await page.route(`${apiUrl}?*`, route => {
     const params = new URL(route.request().url()).searchParams;
     if (params.has('publisher_like')) return route.fulfill({ status: 503, json: {} });
-    return route.fulfill({ json: [firstBook, secondBook] });
+    return route.fulfill(booksResponse([firstBook, secondBook]));
   });
   await page.goto('/');
   await expect(page.getByRole('link', { name: firstBook.title, exact: true })).toBeVisible();
@@ -34,8 +34,8 @@ test('combines publisher, full text and sorting, retains filters on retry and re
   const params = new URL((await retried).url()).searchParams;
   expect(params.get('q')).toBe('Angular');
   expect(params.get('publisher_like')).toBe('Example Press');
-  expect(params.get('_sort')).toBe('title');
-  expect(params.get('_order')).toBe('desc');
+  expect(params.get('_sort')).toBe('title,id');
+  expect(params.get('_order')).toBe('desc,asc');
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await expect(page.getByRole('link', { name: secondBook.title, exact: true })).toBeVisible();
   await expect(page.getByPlaceholder('Search for books...')).toHaveValue('');
@@ -48,7 +48,7 @@ test('combines publisher, full text and sorting, retains filters on retry and re
 test('publisher-only empty results offer recovery and clearing search keeps other filters', async ({ page }) => {
   await page.route(`${apiUrl}?*`, route => {
     const params = new URL(route.request().url()).searchParams;
-    return route.fulfill({ json: params.has('publisher_like') ? [] : [firstBook] });
+    return route.fulfill(booksResponse(params.has('publisher_like') ? [] : [firstBook]));
   });
   await page.goto('/');
   await page.getByLabel('Publisher', { exact: true }).fill('Unknown');
@@ -76,8 +76,8 @@ for (const [option, field, order] of [
     const requested = page.waitForRequest(request => new URL(request.url()).searchParams.has('_sort'));
     await page.getByLabel('Sort by', { exact: true }).selectOption(option);
     const params = new URL((await requested).url()).searchParams;
-    expect(params.get('_sort')).toBe(field);
-    expect(params.get('_order')).toBe(order);
+    expect(params.get('_sort')).toBe(`${field},id`);
+    expect(params.get('_order')).toBe(`${order},asc`);
     await page.clock.resume();
     await expect(page.getByRole('link', { name: firstBook.title, exact: true })).toBeVisible();
   });

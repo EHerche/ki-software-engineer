@@ -1,15 +1,138 @@
 import type { Page } from '@playwright/test';
-import { apiUrl, expect, firstBook, secondBook, test } from './fixtures/books';
+import {
+  apiUrl,
+  booksResponse,
+  expect,
+  firstBook,
+  secondBook,
+  test,
+  mockBooksPages,
+  paginationBooks
+} from './fixtures/books';
 
 const surprise = (page: Page) => page.getByRole('button', { name: 'Überrasche mich!', exact: true });
 const draw = (page: Page) => page.getByRole('button', { name: 'Zieh eins!', exact: true });
 const reroll = (page: Page) => page.getByRole('button', { name: 'Das Schicksal herausfordern', exact: true });
 
+for (const animate of [false, true]) {
+  test(`AC-30 / all filtered pages are candidates in ${animate ? 'animated' : 'direct'} mode`, async ({ page }) => {
+    await mockBooksPages(page, [
+      ...paginationBooks,
+      { ...firstBook, id: 'foreign', title: 'Match foreign', publisher: 'Other' }
+    ]);
+    const params: URLSearchParams[] = [];
+    page.on('request', request => {
+      if (request.url().startsWith(`${apiUrl}?`)) params.push(new URL(request.url()).searchParams);
+    });
+    await page.goto('/?searchText=Match&searchField=title&publisher=Target&sort=pages-asc');
+    await expect(page.locator('app-book-item')).toHaveCount(10);
+    params.length = 0;
+    await page.evaluate(() => {
+      Math.random = () => 0.999;
+    });
+    await (animate ? surprise(page) : draw(page)).click();
+    if (animate) {
+      await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
+      await page
+        .locator('.roulette-cube')
+        .evaluate(element => element.getAnimations().forEach(animation => animation.finish()));
+    }
+    await expect(page.getByRole('dialog').getByRole('heading')).toHaveText(paginationBooks[22].title);
+    expect(params.map(value => value.get('_page'))).toEqual(['1', '2', '3']);
+    for (const value of params) {
+      expect(value.get('title_like')).toBe('Match');
+      expect(value.get('publisher_like')).toBe('Target');
+      expect(value.get('_sort')).toBe('numPages,id');
+      expect(value.get('_order')).toBe('asc,asc');
+    }
+    await reroll(page).click();
+    if (animate) {
+      await expect(page.locator('.roulette-cube')).toHaveClass(/is-spinning/);
+      await page
+        .locator('.roulette-cube')
+        .evaluate(element => element.getAnimations().forEach(animation => animation.finish()));
+    }
+    await expect(page.getByRole('dialog').getByRole('heading')).toHaveText(paginationBooks[21].title);
+    expect(params).toHaveLength(6); // a fresh traversal; no durable candidates cache
+  });
+}
+
+test('AC-30 / candidate page error never draws from a subset and retry reloads all', async ({ page }) => {
+  await mockBooksPages(page);
+  let fail = true;
+  await page.route(`${apiUrl}?*`, route => {
+    if (fail && new URL(route.request().url()).searchParams.get('_page') === '2')
+      return route.fulfill({ status: 503, json: {} });
+    return route.fallback();
+  });
+  await page.goto('/');
+  await draw(page).click();
+  await expect(page.getByRole('alert')).toContainText('Unable to load roulette candidates');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.roulette-cube')).not.toHaveClass(/is-spinning/);
+  await expect(page.locator('app-book-item')).toHaveCount(10);
+  fail = false;
+  await page.evaluate(() => {
+    Math.random = () => 0.999;
+  });
+  await page.getByRole('button', { name: 'Retry roulette', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('heading')).toHaveText(paginationBooks[22].title);
+});
+
+for (const action of ['page', 'filter', 'navigate'] as const) {
+  test(`AC-18 / AC-30 / ${action} cancels pending candidates and duplicate draw is blocked`, async ({ page }) => {
+    await mockBooksPages(page);
+    let release!: () => void;
+    const hold = new Promise<void>(resolve => (release = resolve));
+    let count = 0;
+    await page.route(`${apiUrl}?*`, async route => {
+      if (new URL(route.request().url()).searchParams.get('_page') !== '2') return route.fallback();
+      count++;
+      await hold;
+      await route.fulfill(booksResponse(paginationBooks.slice(10, 20), 23));
+    });
+    await page.goto('/');
+    await expect(page.locator('app-book-item')).toHaveCount(10);
+    const pending = page.waitForRequest(request => new URL(request.url()).searchParams.get('_page') === '2');
+    await draw(page).dblclick();
+    const request = await pending;
+    const cancelled = page.waitForEvent('requestfailed', candidate => candidate === request);
+    await expect(page.getByRole('paragraph').filter({ hasText: 'Loading roulette candidates...' })).toBeVisible();
+    await expect(draw(page)).toBeDisabled();
+    await expect(surprise(page)).toBeDisabled();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(count).toBe(1);
+    try {
+      if (action === 'page') await page.getByRole('button', { name: 'Next page', exact: true }).click();
+      if (action === 'filter') {
+        await page.clock.install();
+        await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+        await page.getByLabel('Search the collection', { exact: true }).fill('Book');
+      }
+      if (action === 'navigate') await page.getByRole('link', { name: paginationBooks[0].title, exact: true }).click();
+      await cancelled;
+    } finally {
+      release();
+    }
+    if (action === 'filter') {
+      await page.clock.runFor(300);
+      await page.clock.resume();
+    }
+    if (action === 'navigate')
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(paginationBooks[0].title);
+    else await expect(page.getByText(action === 'page' ? 'Page 2 of 3' : 'Page 1 of 3', { exact: true })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('.roulette-cube.is-spinning')).toHaveCount(0);
+  });
+}
+
 test('book covers form six cube faces and the roll lands on the announced book', async ({ page }) => {
   await page.route(`${apiUrl}?*`, route =>
-    route.fulfill({
-      json: Array.from({ length: 8 }, (_, index) => ({ ...firstBook, id: `book-${index}`, title: `Book ${index + 1}` }))
-    })
+    route.fulfill(
+      booksResponse(
+        Array.from({ length: 8 }, (_, index) => ({ ...firstBook, id: `book-${index}`, title: `Book ${index + 1}` }))
+      )
+    )
   );
   await openWithClock(page);
   // Exercise a winner beyond the six initially visible faces.
@@ -101,7 +224,7 @@ test('rotates a cube without cycling shelf selection, then announces the result 
 
 for (const count of [1, 2]) {
   test(`${count}-book roulette supports reroll without an avoidable immediate duplicate`, async ({ page }) => {
-    await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [firstBook, secondBook].slice(0, count) }));
+    await page.route(`${apiUrl}?*`, route => route.fulfill(booksResponse([firstBook, secondBook].slice(0, count))));
     await openWithClock(page);
     await surprise(page).click();
     await page.clock.runFor(20);
@@ -271,7 +394,7 @@ test('waits for the real animation end instead of opening the dialog on a timer'
 for (const cover of ['missing', 'broken']) {
   test(`roulette result handles a ${cover} cover`, async ({ page }) => {
     await page.route(`${apiUrl}?*`, route =>
-      route.fulfill({ json: [{ ...firstBook, cover: cover === 'missing' ? '' : firstBook.cover }] })
+      route.fulfill(booksResponse([{ ...firstBook, cover: cover === 'missing' ? '' : firstBook.cover }]))
     );
     await page.route('http://localhost:4730/covers/**', route => route.abort());
     await page.clock.install();
@@ -290,21 +413,23 @@ for (const width of [375, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ colorScheme: theme });
       await page.route(`${apiUrl}?*`, route =>
-        route.fulfill({
-          json: Array.from({ length: 6 }, (_, index) => ({
-            ...firstBook,
-            id: `cube-book-${index}`,
-            title: [
-              'Angular in Practice',
-              'Practical TypeScript',
-              'The Reading Room',
-              'Clean Code',
-              'Design Stories',
-              'Web Worlds'
-            ][index],
-            cover: `http://localhost:4730/covers/cube-${index}.svg`
-          }))
-        })
+        route.fulfill(
+          booksResponse(
+            Array.from({ length: 6 }, (_, index) => ({
+              ...firstBook,
+              id: `cube-book-${index}`,
+              title: [
+                'Angular in Practice',
+                'Practical TypeScript',
+                'The Reading Room',
+                'Clean Code',
+                'Design Stories',
+                'Web Worlds'
+              ][index],
+              cover: `http://localhost:4730/covers/cube-${index}.svg`
+            }))
+          )
+        )
       );
       await page.route('http://localhost:4730/covers/cube-*.svg', route => {
         const index = Number(

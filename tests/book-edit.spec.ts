@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import type { Book } from '../src/app/books/book';
 import type { BookChanges } from '../src/app/books/book-api-client.service';
-import { apiUrl, expect, firstBook, secondBook, test } from './fixtures/books';
+import { apiUrl, booksResponse, expect, firstBook, secondBook, test } from './fixtures/books';
 
 const updatedFields: BookChanges = {
   title: 'Updated Angular',
@@ -73,7 +73,7 @@ test('saves every editable field with original ISBN and IDs and retains the chan
     }
     return route.fulfill({ json: stored });
   });
-  await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [stored] }));
+  await page.route(`${apiUrl}?*`, route => route.fulfill(booksResponse([stored])));
   await openEditor(page);
   await fillChanges(page);
 

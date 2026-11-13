@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Book } from '../src/app/books/book';
-import { apiUrl, expect, firstBook, secondBook, test } from './fixtures/books';
+import { apiUrl, booksResponse, expect, firstBook, secondBook, test } from './fixtures/books';
 
 const listRequest = (url: string) => url.startsWith(`${apiUrl}?`);
 
@@ -17,7 +17,7 @@ test('shows initial loading and sends the default page size before rendering res
   await page.route(`${apiUrl}?*`, async route => {
     expect(new URL(route.request().url()).searchParams.get('_limit')).toBe('10');
     await ready;
-    await route.fulfill({ json: [firstBook] });
+    await route.fulfill(booksResponse([firstBook]));
   });
 
   try {
@@ -33,7 +33,7 @@ test('shows initial loading and sends the default page size before rendering res
 
 for (const search of ['', 'unknown']) {
   test(`shows a successful empty ${search ? 'search' : 'collection'}`, async ({ page }) => {
-    await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [] }));
+    await page.route(`${apiUrl}?*`, route => route.fulfill(booksResponse([])));
     await page.goto('/');
     if (search) {
       await page.getByPlaceholder('Search for books...').fill(search);
@@ -57,7 +57,7 @@ for (const failure of ['server', 'network'] as const) {
       if (requests === 1) {
         return failure === 'network' ? route.abort('failed') : route.fulfill({ status: 503, json: {} });
       }
-      return route.fulfill({ json: [firstBook] });
+      return route.fulfill(booksResponse([firstBook]));
     });
     await page.goto('/');
     await expect(page.getByRole('alert')).toContainText('Unable to load books');
@@ -79,7 +79,7 @@ test('clears old results on a failed search and accepts a later search', async (
     const query = new URL(route.request().url()).searchParams.get('q');
     return query === 'fail'
       ? route.fulfill({ status: 503, json: {} })
-      : route.fulfill({ json: query ? [secondBook] : [firstBook] });
+      : route.fulfill(booksResponse(query ? [secondBook] : [firstBook]));
   });
   await page.goto('/');
   await expect(page.getByRole('link', { name: firstBook.title, exact: true })).toBeVisible();
@@ -136,10 +136,10 @@ for (const action of ['search', 'clear', 'navigate'] as const) {
   test(`${action} cancels an active request before any debounce and ignores its late response`, async ({ page }) => {
     let release!: () => void;
     const ready = new Promise<void>(resolve => (release = resolve));
-    const slowUrl = `${apiUrl}?_limit=10&q=slow`;
+    const slowUrl = `${apiUrl}?_limit=10&q=slow&_page=1`;
     await page.route(slowUrl, async route => {
       await ready;
-      await route.fulfill({ json: [{ ...firstBook, title: 'Stale response' }] });
+      await route.fulfill(booksResponse([{ ...firstBook, title: 'Stale response' }]));
     });
     await openCollectionWithPausedClock(page);
     const input = page.getByPlaceholder('Search for books...');
@@ -196,7 +196,7 @@ test('navigation destroys the pending search timer', async ({ page }) => {
 for (const cover of ['missing', 'broken'] as const) {
   test(`cards handle a ${cover} cover`, async ({ page }) => {
     await page.route(`${apiUrl}?*`, route =>
-      route.fulfill({ json: [{ ...firstBook, cover: cover === 'missing' ? '' : firstBook.cover }] })
+      route.fulfill(booksResponse([{ ...firstBook, cover: cover === 'missing' ? '' : firstBook.cover }]))
     );
     await page.route('http://localhost:4730/covers/**', route => route.abort());
     await page.goto('/');
@@ -206,7 +206,7 @@ for (const cover of ['missing', 'broken'] as const) {
 }
 
 test('a reused cover recovers when its parent supplies a new cover input', async ({ page }) => {
-  await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [firstBook] }));
+  await page.route(`${apiUrl}?*`, route => route.fulfill(booksResponse([firstBook])));
   await page.route(firstBook.cover, route => route.abort());
   await page.goto('/');
   await expect(page.locator('.book-shelf').getByText('No cover available', { exact: true })).toBeVisible();

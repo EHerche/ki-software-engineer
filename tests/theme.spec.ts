@@ -1,4 +1,4 @@
-import { apiUrl, expect, firstBook, test } from './fixtures/books';
+import { apiUrl, booksResponse, expect, firstBook, test } from './fixtures/books';
 
 for (const theme of ['light', 'dark'] as const) {
   test(`uses the ${theme} device default and supports keyboard switching`, async ({ page }) => {
@@ -141,7 +141,7 @@ for (const theme of ['light', 'dark'] as const) {
       await expect(page.getByText('No cover available')).toBeVisible();
       await assertLayout();
       await page.screenshot({ path: testInfo.outputPath('missing-cover.png'), fullPage: true });
-      await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [] }));
+      await page.route(`${apiUrl}?*`, route => route.fulfill(booksResponse([])));
       await page.goto('/');
       await expect(page.getByText('No books available', { exact: true })).toBeVisible();
       await assertLayout();
@@ -157,7 +157,7 @@ for (const theme of ['light', 'dark'] as const) {
       });
       await page.route(`${apiUrl}?*`, async route => {
         await waiting;
-        await route.fulfill({ json: [] });
+        await route.fulfill(booksResponse([]));
       });
       try {
         await page.getByRole('button', { name: 'Retry' }).click();

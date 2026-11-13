@@ -1,4 +1,4 @@
-import { apiUrl, expect, firstBook, test } from './fixtures/books';
+import { apiUrl, booksResponse, expect, firstBook, test } from './fixtures/books';
 
 for (const theme of ['light', 'dark'] as const) {
   for (const width of [375, 1440]) {
@@ -6,13 +6,15 @@ for (const theme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height: 1000 });
       await page.emulateMedia({ colorScheme: theme });
       await page.route(`${apiUrl}?*`, route =>
-        route.fulfill({
-          json: Array.from({ length: 10 }, (_, i) => ({
-            ...firstBook,
-            id: `book-${i}`,
-            title: `Book ${i + 1}`
-          }))
-        })
+        route.fulfill(
+          booksResponse(
+            Array.from({ length: 10 }, (_, i) => ({
+              ...firstBook,
+              id: `book-${i}`,
+              title: `Book ${i + 1}`
+            }))
+          )
+        )
       );
       await page.goto('/');
       const books = page.locator('.shelf-book');
@@ -45,7 +47,7 @@ for (const theme of ['light', 'dark'] as const) {
 
 test('keyboard preview works with missing covers and reduced motion, and search clears selection', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.route(`${apiUrl}?*`, route => route.fulfill({ json: [{ ...firstBook, cover: '' }] }));
+  await page.route(`${apiUrl}?*`, route => route.fulfill(booksResponse([{ ...firstBook, cover: '' }])));
   await page.goto('/');
   const trigger = page.getByRole('button', { name: `Preview ${firstBook.title}`, exact: true });
   await trigger.focus();

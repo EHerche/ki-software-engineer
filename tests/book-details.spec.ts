@@ -7,10 +7,10 @@ test('searches the collection, opens details by keyboard, and returns to the col
   await expect(page.getByRole('link', { name: secondBook.title, exact: true })).toHaveCount(0);
 
   const bookLink = page.getByRole('link', { name: firstBook.title, exact: true });
-  await expect(bookLink).toHaveAttribute('href', `/books/${firstBook.id}`);
+  await expect(bookLink).toHaveAttribute('href', `/books/${firstBook.id}?searchText=Angular`);
   await bookLink.focus();
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(`/books/${firstBook.id}`);
+  await expect(page).toHaveURL(`/books/${firstBook.id}?searchText=Angular`);
   const details = page.getByRole('article', { name: firstBook.title });
   await expect(details).toBeVisible();
   for (const value of [
@@ -27,9 +27,11 @@ test('searches the collection, opens details by keyboard, and returns to the col
   await expect(page.getByRole('img', { name: `Cover of ${firstBook.title}` })).toBeVisible();
 
   await page.getByRole('link', { name: 'Back to collection' }).click();
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/?searchText=Angular');
   await expect(page.getByRole('heading', { name: 'Book Collection' })).toBeVisible();
-  await expect(page.getByRole('link', { name: secondBook.title, exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: firstBook.title, exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: secondBook.title, exact: true })).toHaveCount(0);
+  await expect(page.getByPlaceholder('Search for books...')).toHaveValue('Angular');
 });
 
 test('loads a direct details link and reloads it without visiting the collection', async ({ page }) => {

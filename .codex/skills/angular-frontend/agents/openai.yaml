@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Angular Frontend'
+  short_description: 'BookMonkey-Features planen, implementieren und testen'
+  default_prompt: 'Nutze $angular-frontend, um das beschriebene BookMonkey-Feature zuerst zu planen, offene Fragen zu klären und anschließend mit Angular Best Practices und gemockten Playwright-Tests umzusetzen.'
+policy:
+  allow_implicit_invocation: true

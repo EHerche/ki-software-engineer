@@ -4,9 +4,11 @@ import {
   ChangeDetectionStrategy,
   afterNextRender,
   Component,
+  DestroyRef,
   ElementRef,
   inject,
   Injector,
+  signal,
   viewChild
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -26,6 +28,8 @@ import { Book } from './book';
 import { BookApiClient } from './book-api-client.service';
 import { BookCoverComponent } from './book-cover.component';
 import { BookEditComponent } from './book-edit.component';
+import { collectionParams, readCollectionContext } from './book-collection-query';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type LoadedBookState = { status: 'loaded'; book: Book; editing: boolean };
 type BookDetailsState = { status: 'loading' | 'not-found' | 'error'; book: null; editing: false } | LoadedBookState;
@@ -41,8 +45,10 @@ export class BookDetailsComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly bookApiClient = inject(BookApiClient);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly retryRequests = new Subject<void>();
   private readonly editActions = new Subject<EditAction>();
+  readonly collectionQuery = signal(collectionParams(readCollectionContext(this.route.snapshot.queryParamMap)));
 
   private readonly editButton = viewChild<ElementRef<HTMLButtonElement>>('editButton');
   private readonly editor = viewChild<BookEditComponent, ElementRef<HTMLElement>>('editor', { read: ElementRef });
@@ -81,6 +87,15 @@ export class BookDetailsComponent {
       );
     })
   );
+
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(
+        map(params => collectionParams(readCollectionContext(params))),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(query => this.collectionQuery.set(query));
+  }
 
   retry(): void {
     this.retryRequests.next();
