@@ -1,6 +1,6 @@
 # BookMonkey agent guide
 
-Read [ARCHITECTURE.md](ARCHITECTURE.md) for the application structure, data flow, and environment limitations. Keep it aligned with changes to runtime behavior. This is an Angular 20 workshop app with an external Bookmonkey API, not a production backend.
+Read [ARCHITECTURE.md](ARCHITECTURE.md) for the application structure, data flow, and environment limitations. Keep it aligned with changes to runtime behavior. This is an Angular 21 workshop app with an external Bookmonkey API, not a production backend.
 
 Instructions in `src/AGENTS.md` apply to source changes; `src/app/books/AGENTS.md` adds book-specific guidance. Preserve unrelated changes and avoid dependency upgrades or new state libraries unless requested.
 

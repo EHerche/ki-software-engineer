@@ -8,20 +8,22 @@ This guide describes the checked-out code, not an intended future architecture. 
 
 ## Stack and dependencies
 
-Declared versions below come from [package.json](package.json); resolutions come from the current [npm lockfile](package-lock.json), lockfile version 3. Angular core is declared, locked, and locally installed at **20.2.1**.
+Declared versions below come from [package.json](package.json); resolutions come from the current [npm lockfile](package-lock.json), lockfile version 3. Angular core is declared, locked, and locally installed at **21.2.26**.
 
 | Category               | Declared dependencies                                                                                                                                        | Role in this repository                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| Angular runtime        | `@angular/core`, `common`, `compiler`, `forms`, `router`, `platform-browser`, `animations`: `20.2.1` each                                                    | Standalone browser app, routing, HTTP, search binding, reactive book form, animations         |
-| UI                     | `@angular/material` `^20.2.0` (locked `20.2.0`), `@angular/cdk` `20.2.0`                                                                                     | Material snack-bar wrapper and style override; wrapper has no callers                         |
+| Angular runtime        | `@angular/core`, `common`, `compiler`, `forms`, `router`, `platform-browser`, `animations`: `21.2.26` each                                                   | Standalone browser app, routing, HTTP, search binding, reactive book form, animations         |
+| UI                     | `@angular/material` `^21.2.14` (locked `21.2.14`), `@angular/cdk` `21.2.14`                                                                                  | Material snack-bar wrapper and style override; wrapper has no callers                         |
 | Async/runtime helpers  | `rxjs` `7.8.0`, `zone.js` `0.15.0`, `tslib` `2.3.0`                                                                                                          | HTTP Observable, zone polyfill/change detection, TypeScript helpers                           |
-| State/query packages   | `@ngrx/signals` `20.0.1`, `@angular-architects/ngrx-toolkit` `^20.1.0` (locked `20.1.0`), `@tanstack/angular-query-experimental` `^5.85.5` (locked `5.85.5`) | Production dependencies, but no source imports or providers; no implemented store/query layer |
-| Server packages        | `@angular/platform-server`, `@angular/ssr` `20.2.1`; `express` `5.1.0`                                                                                       | Production dependencies, but no server entry point, SSR configuration, or Express application |
-| Angular build tooling  | `@angular/build`, `@angular/cli` `20.2.0`; `@angular/compiler-cli` `20.2.1`; `typescript` `5.9.2`                                                            | Development dependencies for serving, compilation and builds                                  |
+| State/query packages   | `@ngrx/signals` `21.1.1`, `@angular-architects/ngrx-toolkit` `^21.0.1` (locked `21.0.1`), `@tanstack/angular-query-experimental` `^5.85.5` (locked `5.85.5`) | Production dependencies, but no source imports or providers; no implemented store/query layer |
+| Server packages        | `@angular/platform-server` `21.2.26`, `@angular/ssr` `21.2.30`; `express` `5.1.0`                                                                            | Production dependencies, but no server entry point, SSR configuration, or Express application |
+| Angular build tooling  | `@angular/build`, `@angular/cli` `21.2.30`; `@angular/compiler-cli` `21.2.26`; `typescript` `5.9.2`                                                          | Development dependencies for serving, compilation and builds                                  |
 | Styling tooling        | `tailwindcss`, `@tailwindcss/postcss` `4.1.12`; `postcss` `8.5.6`                                                                                            | Development dependencies producing utility CSS                                                |
-| Tests/formatting/types | `@playwright/test` `^1.55.0` (locked `1.55.0`), `prettier` `3.6.2`, `@types/node` `^20.17.19`, `@types/express` `^5.0.1`                                     | Development tooling; type packages are locked to `20.19.11` and `5.0.3` respectively          |
+| Tests/formatting/types | `@playwright/test` `^1.55.0` (locked `1.55.0`), `prettier` `3.6.2`, `@types/node` `^20.19.43`, `@types/express` `^5.0.1`                                     | Development tooling; type packages are locked to `20.19.43` and `5.0.3` respectively          |
 
 The project does not pin Node/npm through an `engines` field or version file. The locked Angular build package declares Node `^20.19.0 || ^22.12.0 || >=24.0.0`; validation here used Node `24.22.1` and npm `11.21.1`. These are observed tool versions, not a project policy.
+
+Angular 21 compatibility and the complete Angular-related peer audit are recorded in [the upgrade report](docs/upgrades/angular-21.md). Existing Reactive Forms, zone-based change detection and browser-test tooling are retained.
 
 ## Directory map
 
@@ -48,9 +50,9 @@ The project does not pin Node/npm through an `engines` field or version file. Th
 4. [App](src/app/app.ts) supplies the header/footer and a `RouterOutlet` via an external template; its component CSS file is empty.
 5. [routes](src/app/app.routes.ts) lazily imports `BookListComponent` for the empty path, `BookCreateComponent` at `books/new`, and `BookDetailsComponent` at `books/:id` through `loadComponent`. The static creation route precedes the ID route. A wildcard redirects other paths to the empty path. There are no guards, resolvers, or route-level providers.
 
-All components use the [Angular 20 standalone default](https://v20.angular.dev/guide/components), verified through Context7, without redundant standalone flags. No first-party NgModule is defined. Components import individual dependencies such as `AsyncPipe`, `RouterLink`, and `ReactiveFormsModule`.
+All components use the [Angular 21 standalone default](https://v21.angular.dev/guide/components), verified through Context7, without redundant standalone flags. No first-party NgModule is defined. Components import individual dependencies such as `AsyncPipe`, `RouterLink`, and `ReactiveFormsModule`.
 
-**Verified configuration:** every component explicitly declares `ChangeDetectionStrategy.OnPush`. Signal inputs, local writable/computed signals, template events and AsyncPipe notifications drive rendering. Theme state is signal-backed so device-preference changes also notify the root shell. The app retains zone-based change detection; the [zone provider](https://v20.angular.dev/api/core/provideZoneChangeDetection) coalesces bubbling events separately from the search debounce.
+**Verified configuration:** every component explicitly declares `ChangeDetectionStrategy.OnPush`. Signal inputs, local writable/computed signals, template events and AsyncPipe notifications drive rendering. Theme state is signal-backed so device-preference changes also notify the root shell. The app retains zone-based change detection; the [zone provider](https://v21.angular.dev/api/core/provideZoneChangeDetection) coalesces bubbling events separately from the search debounce.
 
 The configured application is client-rendered. No server bootstrap, hydration provider, prerender configuration, or SSR target is present despite the server dependencies.
 
@@ -195,3 +197,9 @@ Applied the connected Angular MCP best-practices guide and checked Angular 20 do
 - A regression run exposed a pending search firing during lazy navigation. The existing navigation tests failed before the NavigationStart cancellation fix and pass afterward. The theme navigation/reload test now waits for the details h1, since its previous heading selector also matched the collection's h2. The cover input test reads the signal-backed parent book and forces checking through Angular's development debug API, preserving its existing-component assertion.
 - Strict TypeScript checking of all seven application test files, targeted Prettier and diff whitespace checks pass. An independent read-only review found no outstanding actionable issues.
 - Firefox failed to create a page inside the sandbox; the approved full run outside the sandbox passed all three browsers. Tests do not verify the live external API. The pre-existing incomplete Karma target remains unchanged and was not run.
+
+## Angular 21 upgrade validation (2026-11-13)
+
+Updated to Angular **21.2.26**, CLI/build/SSR **21.2.30**, Material/CDK **21.2.14**, NgRx Signals **21.1.1** and Toolkit **21.0.1** after Node/TypeScript and peer checks. All applicable required official ng-update migrations completed without source changes. Reactive Forms, zone-based change detection and application behavior are retained; no form migration or independent refactor was performed.
+
+Development and production builds pass (production initial bundle **381.35 kB**, within budgets). Chromium passes **137/137** application tests. WebKit passes **137/137** in the complete serial rerun after two initial parallel failures. The initial three-browser run was 404 passed / 7 failed; five Firefox failures were not investigated further after the user requested omitting Firefox verification. Legacy Karma remains blocked by missing karma-jasmine. Strict test TypeScript, tooling compilation, complete dependency-tree/strict peer validation, formatting and diff whitespace checks pass. See [the detailed upgrade report](docs/upgrades/angular-21.md) for the complete peer audit, migration commands, test environment and actual failures.
