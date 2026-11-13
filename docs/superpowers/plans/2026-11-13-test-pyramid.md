@@ -23,7 +23,13 @@ only. No new packages or production refactor is needed.
 - [x] Keep native Enter, real Back/Reload, actual animation under both motion
       settings, keyboard/focus, CSS contrast and selected layout matrices.
 - [x] Verify all 20 Chromium cases: passed in 16.0 seconds with two workers.
-- [ ] Verify the final 147 lower-level cases, TypeScript, formatting and links.
+- [x] Verify the final 147 lower-level cases and TypeScript.
+- [x] Complete final formatting, report and documentation-link checks. The current
+      HTML report confirms 20 expected Chromium cases, zero failures/flaky/skipped
+      cases; source and browser TypeScript checks pass. All 147 lower-level cases
+      pass in the final combined run (13 files). No production build was repeated
+      because runtime source, dependencies and production build options did not
+      change.
 
 Initial integration failures were test harness issues: required edit inputs must
 be set before rendering, and retries must wait for Signal Forms' submit action to

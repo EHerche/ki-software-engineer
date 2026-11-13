@@ -39,6 +39,9 @@ describe('Integration: collection requests, filters and pagination', () => {
 
   it.each([503, 0])('clears stale books on error %s and retries the current criteria', status => {
     const app = screen(BookListComponent, {}, { searchText: 'Angular', searchField: 'title', publisher: 'Press' });
+    app.respond([sampleBook]);
+    expect(app.host.querySelector('app-book-item')).not.toBeNull();
+    app.fixture.componentInstance.retry();
     const request = app.collection();
     if (status) request.flush({}, { status, statusText: 'Failure' });
     else request.error(new ProgressEvent('error'));

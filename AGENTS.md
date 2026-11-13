@@ -13,7 +13,7 @@ Instructions in `src/AGENTS.md` apply to source changes; `src/app/books/AGENTS.m
 - `npx playwright test tests/book-details.spec.ts tests/book-list.spec.ts`: application regression tests across configured browsers.
 - `npx prettier --check <changed-files>`: targeted formatting check. Format only changed files.
 - `npm test`: all Vitest unit, Angular component and integration tests, once, in jsdom (two workers).
-- `npm run test:unit` / `npm run test:components`: run the two test levels separately; `npm run test:watch` watches both.
+- `npm run test:unit` / `npm run test:components`: run the isolated groups separately; `npm run test:watch` watches all lower test levels.
 - `npm run test:integration`: real container/form/API-client interactions against the HTTP test adapter. Watch mode includes this group too.
 - `npm run test:e2e`: Playwright UI tests in Chromium with two workers. Keep Firefox/WebKit excluded unless requested.
 - See [docs/testing.md](docs/testing.md) for test naming, scope and commands. Specs remain excluded from the application build.
