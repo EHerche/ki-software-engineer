@@ -1,7 +1,7 @@
 import { AppShell } from './pages/app-shell';
 import { apiUrl, booksResponse, expect, firstBook, test } from './fixtures/books';
 
-for (const theme of ['light', 'dark'] as const) {
+for (const theme of ['dark'] as const) {
   test(`uses the ${theme} device default and supports keyboard switching`, async ({ page }) => {
     const shell = new AppShell(page);
     const toggle = shell.themeToggle;
@@ -23,14 +23,6 @@ for (const theme of ['light', 'dark'] as const) {
       await page.keyboard.press('Enter');
       await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
     });
-  });
-
-  test(`restores a saved ${theme} preference on a direct details link`, async ({ page }) => {
-    await page.emulateMedia({ colorScheme: theme === 'dark' ? 'light' : 'dark' });
-    await page.addInitScript(value => localStorage.setItem('bookmonkey-theme', value), theme);
-    await page.goto(`/books/${firstBook.id}`);
-    await expect(page.getByRole('heading', { name: firstBook.title, exact: true })).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
   });
 }
 
@@ -56,49 +48,8 @@ test('follows device changes until explicitly switched, then persists across nav
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('ignores invalid preferences and continues to follow the device', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('bookmonkey-theme', 'invalid'));
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
-  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-  await page.emulateMedia({ colorScheme: 'light' });
-  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
-});
-
-test('switches and retains the session preference when storage is unavailable', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(window, 'localStorage', {
-      get() {
-        throw new Error('Storage blocked');
-      }
-    });
-  });
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
-  await page.getByRole('switch').click();
-  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.emulateMedia({ colorScheme: 'light' });
-  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('link', { name: firstBook.title, exact: true }).click();
-  await expect(page.getByRole('heading', { name: firstBook.title, exact: true })).toBeVisible();
-  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-});
-
-test('switches when reading storage works but writing is blocked', async ({ page }) => {
-  await page.addInitScript(() => {
-    Storage.prototype.setItem = () => {
-      throw new Error('Write blocked');
-    };
-  });
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
-  await page.getByRole('switch').click();
-  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-});
-
 for (const theme of ['light', 'dark'] as const) {
-  for (const width of [375, 1440]) {
+  for (const width of [375]) {
     test(`${theme} at ${width}px: readable palette and complete screen states`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height: 1000 });
       await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });

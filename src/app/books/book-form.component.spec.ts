@@ -38,6 +38,17 @@ describe('Component: shared book form', () => {
     expect(labelledField(host, 'ISBN *').readOnly).toBe(false);
     expect(labelledField(host, 'Title *').getAttribute('aria-invalid')).toBe('false');
     expect(host.textContent).not.toContain('Enter a title.');
+    for (const [label, value] of [
+      ['Subtitle', sampleDraft.subtitle],
+      ['Author', sampleDraft.author],
+      ['Publisher *', sampleDraft.publisher],
+      ['Pages', String(sampleDraft.numPages)],
+      ['Price', sampleDraft.price],
+      ['Cover URL', sampleDraft.cover],
+      ['Description *', sampleDraft.abstract]
+    ]) {
+      expect(labelledField(host, label).value).toBe(value);
+    }
   });
 
   it.each(['', '   '])('shows required errors and does not emit an invalid submission %j', async value => {
@@ -125,5 +136,26 @@ describe('Component: shared book form', () => {
     element<HTMLButtonElement>(host, 'button[type="button"]').click();
     expect(cancelled).toHaveBeenCalledOnce();
     expect(submitted).not.toHaveBeenCalled();
+  });
+
+  it.each([0, 123])('normalizes native bad number input after initial pages %s', async numPages => {
+    fixture.componentRef.setInput('initialValue', { ...sampleDraft, numPages });
+    fixture.detectChanges();
+    const pages = labelledField(host, 'Pages');
+    // jsdom cannot type an incomplete native number. Emulate the browser clearing
+    // badInput when the component clears the value and dispatches its input event.
+    let badInput = true;
+    Object.defineProperty(pages, 'validity', { get: () => ({ badInput, valid: !badInput }), configurable: true });
+    pages.addEventListener(
+      'input',
+      () => {
+        badInput = false;
+      },
+      { capture: true, once: true }
+    );
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await submit();
+    expect(submitted).toHaveBeenCalledExactlyOnceWith({ ...sampleDraft, numPages: 0 });
   });
 });

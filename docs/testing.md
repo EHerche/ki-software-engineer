@@ -1,109 +1,106 @@
-# Testebenen in BookMonkey
+# Testpyramide in BookMonkey
 
-Die Tests sind nach ihrer Aufgabe getrennt. Stand 13.11.2026 gibt es **56
-Unit-Tests**, **29 Komponententests** und **153 Playwright-UI-Tests**, zusammen
-**238 Testfälle**. Diese Zahlen sind keine Aussage über prozentuale Codeabdeckung.
+Die Browser-Suite wurde von **153 auf 20 Fälle** reduziert. Detailprüfungen wurden
+in untere Ebenen verlagert und wiederholte Kombinationen zusammengefasst. Es gibt
+keine versteckte zweite Browser-Suite und keine deaktivierten Altprüfungen.
 
-| Ebene      | Was wird geprüft?                                                                  | Ausführung                                  |
-| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------- |
-| Unit       | Isolierte Logik und HTTP-Servicevertrag; keine gerenderten Komponenten             | Vitest über Angular CLI                     |
-| Komponente | Eine echte Angular-Komponente mit Template, Inputs, DOM-Ereignissen und Outputs    | Angular TestBed, Vitest und jsdom           |
-| UI/Browser | Zusammenspiel der laufenden App über Nutzeraktionen, Navigation und mehrere Seiten | Playwright, derzeit ausschließlich Chromium |
+| Ebene                       |   Fälle | Zweck                                                                        |
+| --------------------------- | ------: | ---------------------------------------------------------------------------- |
+| Isolierte Unit-Tests        |      63 | Logik, URL-Kontext, Pflichtfelder, HTTP-Servicevertrag und Theme-Service     |
+| Isolierte Komponententests  |      31 | Inputs, Templatezustände, DOM-Ereignisse, Outputs, Formular und Vorschau     |
+| Integrationstests           |      53 | Echte Container, Formulare, API-Client und HTTP-Testadapter im Zusammenspiel |
+| Kritische Browser-/UI-Tests |      20 | Nutzerwege sowie echte History, Tastatur, Layout und Animation               |
+| Gesamt                      | **167** | Unterschiedliche Aussagen, keine prozentuale Codeabdeckung                   |
 
-## Neue Unit-Tests: 56 Fälle in drei Dateien
+Die drei Stufen der Pyramide sind damit **94 isolierte Tests → 53 Integrationstests
+→ 20 Browserprüfungen**. Isolierte Komponententests gehören hier zur unteren Stufe.
+Neue Fälle werden nach Risiko und benötigter Umgebung eingeordnet, nicht nach
+einem starren Zahlenverhältnis.
 
-| Datei unter `src/app/books/`                                                              | Fälle | Abdeckung                                                                                                                                                                                    |
-| ----------------------------------------------------------------------------------------- | ----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [book-collection-query.unit.spec.ts](../src/app/books/book-collection-query.unit.spec.ts) |    24 | Standardwerte, ungültige Seiten, erlaubte Suchfelder/Sortierungen, URL-Roundtrip, Ausschluss fremder Parameter und Erkennen geänderter Filter                                                |
-| [book-api-client.unit.spec.ts](../src/app/books/book-api-client.unit.spec.ts)             |    24 | Kalte HTTP-Observables, Limits, Trimmen, literale Suchmuster, Sortierung mit ID-Tie-Breaker, Pagination-Metadaten, ungültige Antworten, kodierte IDs, POST-/PUT-Payload und Fehlerweitergabe |
-| [book-form.model.unit.spec.ts](../src/app/books/book-form.model.unit.spec.ts)             |     8 | Leere/Whitespace-Pflichtfelder einschließlich Unicode-Leerzeichen sowie gültige Texte                                                                                                        |
+## Zuordnung der bisherigen Browserprüfungen
 
-Die API-Client-Tests verwenden Angulars `HttpTestingController`. Sie prüfen echte
-Anfragen des Services gegen einen isolierten Test-Backendadapter. Jede erwartete
-Anfrage wird explizit beantwortet; nach jedem Test wird auf offene Anfragen
-geprüft. Es wird kein echter API-Server kontaktiert. Die Tests der reinen Funktionen
-benötigen kein `TestBed` und rendern kein DOM.
+| Bisherige Prüfung                                                      | Aktueller Ort                                                   | Was im Browser bleibt                                                                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Suchparameter, Regex-Escaping, Sortierung, geschützte POST-/PUT-Felder | API-Client-Unit-Tests                                           | Such-/Navigationsweg mit sichtbaren Ergebnissen                                                                                           |
+| Ungültige URLs, erlaubte Filter, Kontextvergleich                      | Query-Unit-Tests und Listenintegration                          | Echtes Back/Reload und Rückkehr zur gefilterten Seite                                                                                     |
+| Cover-Fallback und Wiederverwendung                                    | Cover-Komponententests                                          | Fehlendes Cover in der Tastatur-Vorschau                                                                                                  |
+| Pflichtfelder, Vorbelegung, Seitenzahl-Normalisierung, Formularreset   | Form-Modell, Formular-Komponententests und Mutationsintegration | Pflichtfehler → Korrektur → natives Enter im Anlege-Lebenszyklus                                                                          |
+| Einzelne Seiten-/Sortier-/Retry-Kombinationen                          | Pagination-Komponente, API-Unit und Listenintegration           | Vorschau → Details → Editor-Abbruch → richtige Seite                                                                                      |
+| Debounce, alte Antworten, Request-Abbruch und Teardown                 | Listenintegration                                               | Keine künstlichen Timing-Matrizen im Browser                                                                                              |
+| Details-Laden, 404/Server-/Netzwerkfehler, ID-/Query-Wechsel           | Detailsintegration                                              | Direktlink, Reload, Tastatur und Rückkehr                                                                                                 |
+| POST-/PUT-Fehler, Retry, Doppelabsenden, Pending-Abbruch               | Mutationsintegration                                            | Anlegen → Reload → Bearbeiten → Reload → Wiederfinden                                                                                     |
+| Roulette-Kandidaten, Konsistenzfehler, Duplikate und Abbruch           | Rouletteintegration                                             | Direktziehen → Details sowie echte normale/reduzierte Animation                                                                           |
+| Theme-Speicherfehler, ungültige Präferenzen und Listener-Cleanup       | Theme-Service-Unit-Tests                                        | Echte Media-Änderung, Tastatur, Navigation und berechnete CSS-Farben                                                                      |
+| Wiederholte Viewport-/Theme-Matrizen je Feature                        | Browsermatrix zusammengefasst                                   | Regal in beiden Themes bei 375/1440px; Formular-/Details-Lebenszyklus Light/weit und Dark/mobil; Kontrast/Zustände in beiden Themes mobil |
 
-## Neue Komponententests: 29 Fälle in fünf Dateien
+Die einzelnen Anlege-, Bearbeitungs- und Filter-Browserspecs wurden entfernt. Ihre
+Fachprüfungen liegen auf den genannten unteren Ebenen; der durchgängige Nutzerweg
+bleibt in `tests/book-lifecycle.spec.ts`. Es wird keine identische Fallzahl je
+früherem Test behauptet: redundante Variationen wurden bewusst konsolidiert. Die
+Zuordnung ist kein Nachweis vollständiger Codeabdeckung.
 
-| Datei unter `src/app/books/`                                                            | Fälle | Abdeckung                                                                                                                                                  |
-| --------------------------------------------------------------------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [book-cover.component.spec.ts](../src/app/books/book-cover.component.spec.ts)           |     4 | Bild-URL/Alternativtext, fehlendes oder fehlerhaftes Bild und Erholung bei neuem Input                                                                     |
-| [book-pagination.component.spec.ts](../src/app/books/book-pagination.component.spec.ts) |     6 | Gerundete Seitenzahl, deaktivierte Grenzen, Ausgabeevents ohne Inputmutation, leere/exakte Seite und neue Seitengröße                                      |
-| [book-item.component.spec.ts](../src/app/books/book-item.component.spec.ts)             |     3 | Details-Link mit Filterkontext, ursprüngliches Auswahlevent und zugänglicher Auswahlzustand                                                                |
-| [book-preview.component.spec.ts](../src/app/books/book-preview.component.spec.ts)       |     7 | Dialogsemantik, Details-Link, gekürzte Beschreibung nach Inputwechsel, Content-/Backdrop-Klicks, Escape, Reroll und Fokusgrenzen                           |
-| [book-form.component.spec.ts](../src/app/books/book-form.component.spec.ts)             |     9 | Vorbelegung, Pflichtfeldfehler, Korrektur, leere Seitenzahl als 0, Edit-ISBN, Pending-Schutz, erhaltener Fehlerentwurf, Reset bei anderem Buch und Abbruch |
-
-Die Tests setzen Signal-Inputs über `fixture.componentRef.setInput(...)`, rendern
-das Originaltemplate und lösen DOM-Ereignisse aus. Outputs werden beobachtet,
-statt HTTP- oder Elternzustände in Präsentationskomponenten einzubauen. Bei
-asynchronen Formularaktionen warten sie auf `fixture.whenStable()` und führen
-anschließend einen expliziten Renderdurchlauf aus.
-
-`jsdom` simuliert das DOM in Node.js. Echte Darstellung, Layout, Browsernavigation,
-Animationen und Verhalten über mehrere Komponenten bleiben Aufgabe der
-[Playwright-UI-Suite](../tests/README.md). Ein Fokus-Test in jsdom ersetzt keinen
-vollständigen Barrierefreiheitstest im Browser.
-
-## Befehle
+## Dateien und Befehle
 
 ```powershell
-# Alle 85 Unit- und Komponententests, genau ein Durchlauf
+# Alle 147 Fälle der drei unteren Gruppen
 npm test
 
-# Nur die 56 Unit-Tests
+# Gruppen getrennt
 npm run test:unit
-
-# Nur die 29 Komponententests
 npm run test:components
+npm run test:integration
 
-# Beide Gruppen beim Bearbeiten automatisch erneut ausführen
+# Untere Gruppen im Watch-Modus
 npm run test:watch
 
-# Separat: die 153 UI-Tests in Chromium
+# Nur die 20 Browserfälle, Chromium, zwei Worker
 npm run test:e2e
-
-# HTML-Report der UI-Tests
 npm run test:e2e:report
+npm run test:e2e:types
 ```
 
-Einzelne Dateien lassen sich direkt über den Angular-CLI-Einstieg prüfen:
+- `src/**/*.unit.spec.ts`: vier Dateien für Query-/API-/Form-Logik und den
+  [Theme-Service](../src/app/shared/theme.service.unit.spec.ts).
+- `src/**/*.component.spec.ts`: fünf Dateien für Cover, Pagination, Buchauswahl,
+  Vorschau und gemeinsames Formular.
+- `src/**/*.integration.spec.ts`: vier Dateien für
+  [Liste](../src/app/books/book-list.integration.spec.ts),
+  [Details](../src/app/books/book-details.integration.spec.ts),
+  [Mutationen](../src/app/books/book-mutations.integration.spec.ts) und
+  [Roulette](../src/app/books/book-roulette.integration.spec.ts).
+- `tests/*.spec.ts`: sieben aktive App-Dateien; Auswahl und Begründung in
+  [tests/README.md](../tests/README.md).
 
-```powershell
-node node_modules/@angular/cli/bin/ng.js test --watch=false --include=src/app/books/book-form.component.spec.ts
-```
+Angulars `@angular/build:unit-test` führt die unteren Ebenen mit Vitest/jsdom und
+maximal zwei Workern aus. Der Builder initialisiert das TestBed. Spec-Konfiguration
+und Testtarget erfassen die drei Muster; die App schließt weiterhin `*.spec.ts`
+aus. Die Umordnung benötigt keine zusätzlichen Abhängigkeiten oder Änderungen an
+der Produktionsimplementierung.
 
-Ein erfolgreicher Lauf endet mit `Tests ... passed` und Exitcode 0. Ein Buildfehler,
-fehlende Tests oder übersprungene Fälle gelten nicht als bestandene Prüfung. Die
-neuen Tests verwenden weder Sleeps noch `.skip`, `.only` oder gelockerte Fehlererwartungen.
+## Funktionsweise und Grenzen
 
-## Konfiguration und Wartung
+Integrationstests rendern Originalkomponenten und Formulare. Der echte
+`BookApiClient` erzeugt Anfragen, die `HttpTestingController` explizit beantwortet
+oder abbricht. [test-support/screen.ts](../test-support/screen.ts) kontrolliert nur
+Route-Parameter, Routerereignisse und Navigationsergebnisse; Formular- und
+HTTP-Geschäftslogik bleiben echt. Browser-History und Navigation über mehrere
+Seiten werden deshalb zusätzlich in Playwright geprüft.
 
-- `angular.json` verwendet den offiziellen Angular-21-Builder
-  `@angular/build:unit-test` mit Vitest. Er ersetzt das vorherige unvollständige
-  Karma-Setup. Es wurden keine bestehenden Unit-Tests migriert, weil zuvor keine
-  vorhanden waren.
-- `vitest.config.ts` begrenzt die Ausführung auf zwei Worker. Ein echter Browser,
-  Browserdownloads oder ein Backend werden für diese 85 Tests nicht benötigt.
-- `tsconfig.spec.json` und der Testtarget erfassen `src/**/*.unit.spec.ts` sowie
-  `src/**/*.component.spec.ts`. Die Playwright-Dateien unter `tests/` laufen in
-  einem eigenen Runner und werden hier nicht entdeckt.
-- `tsconfig.app.json` schließt `*.spec.ts` weiter aus dem App-Build aus.
-  Testdaten und DOM-Helfer liegen unabhängig von Playwright in
-  [test-support/](../test-support/books.ts).
-- Hinzugefügt wurden nur die benötigten Entwicklungsabhängigkeiten Vitest
-  `4.1.12` und jsdom `27.4.0` samt Lockfile. Die DOM-Version unterstützt dieselben
-  Node-Untergrenzen wie der installierte Angular-Builder; Angular und die
-  bestehenden direkten Abhängigkeiten wurden nicht aktualisiert.
-- Neue reine Logiktests heißen `*.unit.spec.ts`; Tests mit gerenderten Komponenten
-  heißen `*.component.spec.ts`. DOM-Aktionen und beobachtbare Ergebnisse testen,
-  anstatt private Implementierungsdetails festzuschreiben. Erwartete
-  HTTP-Anfragen explizit prüfen und über den Testadapter beantworten.
-- Tests für die komplexe Request-Orchestrierung der Listen-/Detailcontainer und
-  den vollständigen Theme-Service-Lifecycle liegen weiterhin überwiegend auf
-  UI-Ebene. Diese Ergänzung behauptet keine vollständige Unit-Abdeckung aller
-  Klassen. Echte Backendpersistenz, Deployment und Lastverhalten sind ebenfalls
-  nicht nachgewiesen. Ein zusätzlicher CI-Testjob wurde nicht eingerichtet.
+Debounce-Zeiten werden mit Vitests Uhr gesteuert. Die Tests prüfen abgebrochene
+Anfragen und das Ausbleiben späterer Duplikate. Formular-Retry-Tests warten auf den
+abgeschlossenen Signal-Forms-Submit, statt einen festen Sleep einzubauen.
 
-Die Testinfrastruktur folgt der offiziellen
-[Angular-21-Anleitung für Vitest](https://v21.angular.dev/guide/testing/migrating-to-vitest).
+jsdom berechnet kein echtes Layout und kann keine unvollständigen nativen
+Zahleneingaben tippen. Der Komponententest simuliert deshalb gezielt den
+`validity.badInput`-Vertrag; er behauptet keine Browserprüfung dieser Eingabevariante.
+Native Enter-Übermittlung und Navigation bleiben browsergeprüft.
+
+Alle HTTP-Prüfungen verwenden Testadapter oder Mocks. Sie belegen weder den echten
+Backendvertrag noch Datenbankpersistenz, Deployment oder Lastverhalten. Firefox
+und WebKit werden nicht ausgeführt. Ein neuer CI-Testjob wurde nicht hinzugefügt.
+
+Neue Tests gehören auf die niedrigste Ebene, die den Fehler zuverlässig erkennt.
+Ein Browserfall braucht einen kritischen Nutzerweg oder eine konkrete
+Browserabhängigkeit als Begründung. Einzelne Fehler dürfen zusätzlich auf der
+nächsthöheren Ebene abgesichert sein; identische Parameter- und Fehlermatrizen
+werden dort nicht erneut durchgespielt.

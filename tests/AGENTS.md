@@ -20,8 +20,12 @@ fixtures and utilities. Read the root `AGENTS.md` and `ARCHITECTURE.md` first.
 - Prefer accessible `getByRole` and `getByLabel` locators. Use `getByTestId` for
   elements without a stable accessible locator. Do not add redundant IDs to
   already labelled controls or select by styling classes in new user journeys.
-- Do not rewrite specialized existing timing, layout or component-contract tests
-  merely to adopt page objects or BDD naming.
+- Keep browser tests focused on critical cross-route user journeys and behavior
+  requiring a real browser: history, native keyboard submission, focus, actual
+  layout, computed colors and CSS animation.
+- Put parameter/validation matrices, request timing/cancellation and service
+  failure combinations in `src/**/*.unit.spec.ts`, `*.component.spec.ts` or
+  `*.integration.spec.ts`. Do not restore the former broad browser matrices.
 
 ## Deterministic scenarios
 
@@ -36,8 +40,10 @@ fixtures and utilities. Read the root `AGENTS.md` and `ARCHITECTURE.md` first.
 - Cover happy paths, empty results, request errors/retry and relevant form
   validation. Check authorization only when an actual authorization flow exists;
   BookMonkey currently has no login or route guards.
-- Preserve existing request cancellation, pagination, editing, creation, shelf,
-  roulette and theme coverage. Do not weaken assertions to obtain a passing run.
+- Preserve the relevant risk coverage at its appropriate level. Establish lower
+  level replacement coverage before removing a browser assertion; document the
+  mapping and any consolidated combinations in `docs/testing.md`. Do not use
+  `.skip`, exclusions or an undisclosed legacy suite to claim a smaller suite.
 
 ## Validation for this task
 

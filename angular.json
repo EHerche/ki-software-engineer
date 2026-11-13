@@ -69,7 +69,7 @@
             "tsConfig": "tsconfig.spec.json",
             "runner": "vitest",
             "runnerConfig": "vitest.config.ts",
-            "include": ["src/**/*.unit.spec.ts", "src/**/*.component.spec.ts"]
+            "include": ["src/**/*.unit.spec.ts", "src/**/*.component.spec.ts", "src/**/*.integration.spec.ts"]
           }
         }
       }

@@ -28,6 +28,7 @@ test.describe('Book lifecycle across the app', () => {
       const library = await mockBookLibrary(page);
 
       await test.step('Given an empty library and a chosen theme', async () => {
+        await page.setViewportSize({ width: theme === 'dark' ? 375 : 1440, height: 900 });
         await page.emulateMedia({ colorScheme: theme === 'light' ? 'dark' : 'light' });
         await books.goto();
         await expect(page.getByText('No books available', { exact: true })).toBeVisible();
@@ -37,12 +38,18 @@ test.describe('Book lifecycle across the app', () => {
       await test.step('When adding a book from the collection', async () => {
         await books.addBook();
         await expect(create.heading).toBeVisible();
-        await create.fillDraft(draft);
         await create.submit();
+        for (const label of ['ISBN *', 'Title *', 'Publisher *', 'Description *']) {
+          await expect(page.getByLabel(label, { exact: true })).toHaveAttribute('aria-invalid', 'true');
+        }
+        await create.fillDraft(draft);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await create.field('title').press('Enter');
       });
       await test.step('Then its details survive a reload with the selected theme', async () => {
         await expect(page).toHaveURL('/books/created-1');
         await expect(details.heading).toHaveText(draft.title);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await page.reload();
         await expect(details.heading).toHaveText(draft.title);
         await expect(details.article.getByText(draft.abstract, { exact: true })).toBeVisible();
@@ -53,6 +60,7 @@ test.describe('Book lifecycle across the app', () => {
         await expect(details.editor.field('title')).toHaveValue(draft.title);
         await expect(details.editor.isbn).toHaveValue(draft.isbn);
         await details.editor.fill({ title: updatedTitle, abstract: updatedAbstract });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await details.editor.submit();
       });
       await test.step('Then the revised details survive reload and return to the collection', async () => {

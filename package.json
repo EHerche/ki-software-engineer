@@ -9,6 +9,7 @@
     "test": "ng test --watch=false",
     "test:unit": "ng test --watch=false --include=src/**/*.unit.spec.ts",
     "test:components": "ng test --watch=false --include=src/**/*.component.spec.ts",
+    "test:integration": "ng test --watch=false --include=src/**/*.integration.spec.ts",
     "test:watch": "ng test --watch",
     "test:e2e": "playwright test --project=chromium --workers=2",
     "test:e2e:report": "playwright show-report",
