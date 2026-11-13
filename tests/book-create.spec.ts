@@ -236,6 +236,8 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByLabel('Title *', { exact: true }).focus();
       await expect(page.getByLabel('Title *', { exact: true })).toBeFocused();
       await expect(page.getByLabel('Title *', { exact: true })).toHaveCSS('outline-style', 'solid');
+      await page.getByLabel('Title *', { exact: true }).blur();
+      await expect(page.getByLabel('Title *', { exact: true })).toHaveAccessibleDescription('Enter a title.');
       await page.getByRole('button', { name: 'Create book', exact: true }).click();
       await expect(page.getByLabel('ISBN *', { exact: true })).toHaveAccessibleDescription('Enter an ISBN.');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -247,4 +249,71 @@ for (const theme of ['light', 'dark'] as const) {
       await expect(page.getByRole('heading', { name: 'Book Collection', exact: true })).toBeVisible();
     });
   }
+}
+
+test('SF-6 / Enter validates create fields and submits without reloading the document', async ({ page }) => {
+  let posts = 0;
+  let documentRequests = 0;
+  await mockCreatedDetails(page);
+  await page.route(apiUrl, route => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    posts++;
+    expect(route.request().postDataJSON()).toEqual(draft);
+    return route.fulfill({ status: 201, json: saved });
+  });
+  await page.goto('/books/new');
+  page.on('request', request => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentRequests++;
+  });
+  await page.getByLabel('Title *', { exact: true }).press('Enter');
+  await expect(page.getByLabel('Title *', { exact: true })).toHaveAccessibleDescription('Enter a title.');
+  await expect(page).toHaveURL('/books/new');
+  expect(posts).toBe(0);
+  await fillDraft(page);
+  await page.getByLabel('Title *', { exact: true }).press('Enter');
+  await expect(page).toHaveURL(`/books/${saved.id}`);
+  await expect(page.getByRole('heading', { name: draft.title, exact: true })).toBeVisible();
+  expect(posts).toBe(1);
+  expect(documentRequests).toBe(0);
+});
+
+for (const initialPages of ['', '123']) {
+  test(`SF-4 / Malformed create pages after ${initialPages ? 'a valid number' : 'a blank'} normalize to zero`, async ({
+    page
+  }) => {
+    let posts = 0;
+    await mockCreatedDetails(page);
+    await page.route(apiUrl, route => {
+      if (route.request().method() !== 'POST') return route.fallback();
+      posts++;
+      expect(route.request().postDataJSON()).toEqual({ ...draft, numPages: 0 });
+      return route.fulfill({ status: 201, json: saved });
+    });
+    await page.goto('/books/new');
+    await fillDraft(page);
+    const pages = page.getByLabel('Pages', { exact: true });
+    await pages.fill(initialPages);
+    await pages.evaluate(
+      () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    );
+    await pages.press('ControlOrMeta+A');
+    await pages.pressSequentially('-');
+    expect(await pages.evaluate((input: HTMLInputElement) => input.validity.badInput)).toBe(true);
+    await expect(pages).toHaveValue('');
+    await page.getByLabel('Title *', { exact: true }).fill('   ');
+    await page.getByRole('button', { name: 'Create book', exact: true }).click();
+    await expect(page.getByLabel('Title *', { exact: true })).toHaveAccessibleDescription('Enter a title.');
+    expect(posts).toBe(0);
+    await page.getByLabel('Title *', { exact: true }).fill(draft.title);
+    await pages.fill(initialPages);
+    await pages.evaluate(
+      () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    );
+    await pages.press('ControlOrMeta+A');
+    await pages.pressSequentially('-');
+    expect(await pages.evaluate((input: HTMLInputElement) => input.validity.badInput)).toBe(true);
+    await page.getByRole('button', { name: 'Create book', exact: true }).click();
+    await expect(page).toHaveURL(`/books/${saved.id}`);
+    expect(posts).toBe(1);
+  });
 }

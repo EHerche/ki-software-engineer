@@ -1,17 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnChanges, output, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
-import { BookFormValue, RequiredBookField, requiredBookText } from './book-form.model';
+import { ChangeDetectionStrategy, Component, input, OnChanges, output, signal, SimpleChanges } from '@angular/core';
+import { form, FormField, required, submit, validate } from '@angular/forms/signals';
+import { BookFormDraft, BookFormValue, RequiredBookField, requiredBookText } from './book-form.model';
 
 @Component({
   selector: 'app-book-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
+  imports: [FormField],
   templateUrl: './book-form.component.html',
   styleUrl: './book-form.component.css'
 })
 export class BookFormComponent implements OnChanges {
-  private readonly formBuilder = inject(FormBuilder).nonNullable;
-
   readonly mode = input.required<'create' | 'edit'>();
   readonly initialValue = input.required<BookFormValue>();
   readonly isbn = input('');
@@ -20,41 +18,62 @@ export class BookFormComponent implements OnChanges {
   readonly submitted = output<BookFormValue>();
   readonly cancelled = output<void>();
 
-  readonly form = this.formBuilder.group({
+  readonly model = signal<BookFormDraft>({
     isbn: '',
-    title: ['', requiredBookText],
+    title: '',
     subtitle: '',
     author: '',
-    publisher: ['', requiredBookText],
-    numPages: new FormControl<number | null>(null),
+    publisher: '',
+    numPages: null,
     price: '',
     cover: '',
-    abstract: ['', requiredBookText]
+    abstract: ''
+  });
+
+  readonly form = form(this.model, path => {
+    required(path.isbn, { when: () => this.mode() === 'create' });
+    required(path.title);
+    required(path.publisher);
+    required(path.abstract);
+    validate(path.isbn, ({ value }) => (this.mode() === 'create' ? requiredBookText(value()) : null));
+    validate(path.title, ({ value }) => requiredBookText(value()));
+    validate(path.publisher, ({ value }) => requiredBookText(value()));
+    validate(path.abstract, ({ value }) => requiredBookText(value()));
   });
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['mode']) {
-      this.form.controls.isbn.setValidators(this.mode() === 'create' ? requiredBookText : null);
-    }
     if (changes['initialValue'] || changes['mode']) {
       const values = this.initialValue();
-      this.form.reset({
-        ...values,
+      this.form().reset({
+        isbn: values.isbn,
+        title: values.title,
+        subtitle: values.subtitle,
+        author: values.author,
+        publisher: values.publisher,
+        price: values.price,
+        cover: values.cover,
+        abstract: values.abstract,
         numPages: this.mode() === 'create' && values.numPages === 0 ? null : values.numPages
       });
     }
   }
 
   invalid(field: RequiredBookField): boolean {
-    const control = this.form.controls[field];
-    return control.touched && control.invalid;
+    const state = this.form[field]();
+    return state.touched() && state.errors().length > 0;
   }
 
-  submit(): void {
+  submit(event: Event, pagesInput: HTMLInputElement): void {
+    event.preventDefault();
     if (this.pending()) return;
-    this.form.markAllAsTouched();
-    if (this.form.invalid) return;
-    const values = this.form.getRawValue();
-    this.submitted.emit({ ...values, numPages: values.numPages ?? 0 });
+    // Native number controls expose incomplete numbers as empty; preserve the previous blank-to-zero contract.
+    if (pagesInput.validity.badInput) {
+      pagesInput.value = '';
+      pagesInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    void submit(this.form, async () => {
+      const values = this.model();
+      this.submitted.emit({ ...values, numPages: values.numPages ?? 0 });
+    });
   }
 }

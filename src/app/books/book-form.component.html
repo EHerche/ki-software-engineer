@@ -7,7 +7,7 @@
     required.
   </p>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <form (submit)="submit($event, pagesInput)" novalidate>
     <fieldset [disabled]="pending()" [attr.aria-busy]="pending()">
       <legend class="sr-only">Book information</legend>
       <div class="grid min-w-0 gap-5 sm:grid-cols-2">
@@ -17,8 +17,7 @@
             <input
               id="create-isbn"
               type="text"
-              formControlName="isbn"
-              required
+              [formField]="form.isbn"
               [attr.aria-invalid]="invalid('isbn')"
               [attr.aria-describedby]="invalid('isbn') ? 'isbn-error' : null"
             />
@@ -36,8 +35,7 @@
           <input
             id="edit-title"
             type="text"
-            formControlName="title"
-            required
+            [formField]="form.title"
             [attr.aria-invalid]="invalid('title')"
             [attr.aria-describedby]="invalid('title') ? 'title-error' : null"
           />
@@ -47,19 +45,18 @@
         </div>
         <div class="sm:col-span-2">
           <label for="edit-subtitle">Subtitle</label>
-          <input id="edit-subtitle" type="text" formControlName="subtitle" />
+          <input id="edit-subtitle" type="text" [formField]="form.subtitle" />
         </div>
         <div>
           <label for="edit-author">Author</label>
-          <input id="edit-author" type="text" formControlName="author" />
+          <input id="edit-author" type="text" [formField]="form.author" />
         </div>
         <div>
           <label for="edit-publisher">Publisher *</label>
           <input
             id="edit-publisher"
             type="text"
-            formControlName="publisher"
-            required
+            [formField]="form.publisher"
             [attr.aria-invalid]="invalid('publisher')"
             [attr.aria-describedby]="invalid('publisher') ? 'publisher-error' : null"
           />
@@ -69,24 +66,30 @@
         </div>
         <div>
           <label for="edit-pages">Pages</label>
-          <input id="edit-pages" type="number" step="any" formControlName="numPages" aria-describedby="pages-help" />
+          <input
+            #pagesInput
+            id="edit-pages"
+            type="number"
+            step="any"
+            [formField]="form.numPages"
+            aria-describedby="pages-help"
+          />
           <p id="pages-help" class="mt-1 text-sm text-muted">Leave blank to use 0.</p>
         </div>
         <div>
           <label for="edit-price">Price</label>
-          <input id="edit-price" type="text" formControlName="price" />
+          <input id="edit-price" type="text" [formField]="form.price" />
         </div>
         <div class="sm:col-span-2">
           <label for="edit-cover">Cover URL</label>
-          <input id="edit-cover" type="text" inputmode="url" formControlName="cover" />
+          <input id="edit-cover" type="text" inputmode="url" [formField]="form.cover" />
         </div>
         <div class="sm:col-span-2">
           <label for="edit-abstract">Description *</label>
           <textarea
             id="edit-abstract"
             rows="7"
-            formControlName="abstract"
-            required
+            [formField]="form.abstract"
             [attr.aria-invalid]="invalid('abstract')"
             [attr.aria-describedby]="invalid('abstract') ? 'abstract-error' : null"
           ></textarea>

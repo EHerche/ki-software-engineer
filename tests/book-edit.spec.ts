@@ -307,3 +307,57 @@ for (const theme of ['light', 'dark'] as const) {
     });
   }
 }
+
+test('SF-6 / Enter validates edit fields and saves without reloading the document', async ({ page }) => {
+  let updates = 0;
+  let documentRequests = 0;
+  await page.route(`${apiUrl}/${firstBook.id}`, route => {
+    if (route.request().method() !== 'PUT') return route.fulfill({ json: firstBook });
+    updates++;
+    const body: Book = route.request().postDataJSON();
+    expect(body).toEqual({ ...firstBook, title: updatedFields.title });
+    return route.fulfill({ json: body });
+  });
+  await openEditor(page);
+  page.on('request', request => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentRequests++;
+  });
+  await page.getByLabel('Title *', { exact: true }).fill('   ');
+  await page.getByLabel('Title *', { exact: true }).press('Enter');
+  await expect(page.getByLabel('Title *', { exact: true })).toHaveAccessibleDescription('Enter a title.');
+  expect(updates).toBe(0);
+  await page.getByLabel('Title *', { exact: true }).fill(updatedFields.title);
+  await page.getByLabel('Title *', { exact: true }).press('Enter');
+  await expect(page.getByRole('heading', { name: updatedFields.title, exact: true })).toBeVisible();
+  await expect(page).toHaveURL(`/books/${firstBook.id}`);
+  expect(updates).toBe(1);
+  expect(documentRequests).toBe(0);
+});
+
+for (const initialPages of ['', String(firstBook.numPages)]) {
+  test(`SF-4 / Malformed edit pages after ${initialPages ? 'a valid number' : 'a blank'} normalize to zero`, async ({
+    page
+  }) => {
+    let updates = 0;
+    await page.route(`${apiUrl}/${firstBook.id}`, route => {
+      if (route.request().method() !== 'PUT') return route.fulfill({ json: firstBook });
+      updates++;
+      const body: Book = route.request().postDataJSON();
+      expect(body).toEqual({ ...firstBook, numPages: 0 });
+      return route.fulfill({ json: body });
+    });
+    await openEditor(page);
+    const pages = page.getByLabel('Pages', { exact: true });
+    await pages.fill(initialPages);
+    await pages.evaluate(
+      () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    );
+    await pages.press('ControlOrMeta+A');
+    await pages.pressSequentially('-');
+    expect(await pages.evaluate((input: HTMLInputElement) => input.validity.badInput)).toBe(true);
+    await expect(pages).toHaveValue('');
+    await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await expect(page.getByRole('heading', { name: firstBook.title, exact: true })).toBeVisible();
+    expect(updates).toBe(1);
+  });
+}
