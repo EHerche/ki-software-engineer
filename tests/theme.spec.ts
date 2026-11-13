@@ -1,20 +1,28 @@
+import { AppShell } from './pages/app-shell';
 import { apiUrl, booksResponse, expect, firstBook, test } from './fixtures/books';
 
 for (const theme of ['light', 'dark'] as const) {
   test(`uses the ${theme} device default and supports keyboard switching`, async ({ page }) => {
-    await page.emulateMedia({ colorScheme: theme });
-    await page.goto('/');
-    const toggle = page.getByRole('switch', { name: 'Dark mode' });
-    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-    await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
-    await expect(page.locator('html')).toHaveCSS('color-scheme', theme);
-    await page.keyboard.press('Tab');
-    await expect(toggle).toBeFocused();
-    await expect(toggle).toHaveCSS('outline-style', 'solid');
-    await page.keyboard.press('Space');
-    await expect(toggle).toHaveAttribute('aria-checked', String(theme !== 'dark'));
-    await page.keyboard.press('Enter');
-    await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
+    const shell = new AppShell(page);
+    const toggle = shell.themeToggle;
+    await test.step('Given a device theme without a saved preference', async () => {
+      await page.emulateMedia({ colorScheme: theme });
+      await page.goto('/');
+      await expect(shell.root).toHaveAttribute('data-theme', theme);
+      await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
+      await expect(shell.root).toHaveCSS('color-scheme', theme);
+    });
+    await test.step('When switching the theme with the keyboard', async () => {
+      await page.keyboard.press('Tab');
+      await expect(toggle).toBeFocused();
+      await expect(toggle).toHaveCSS('outline-style', 'solid');
+      await page.keyboard.press('Space');
+    });
+    await test.step('Then Space toggles the theme and Enter restores it', async () => {
+      await expect(toggle).toHaveAttribute('aria-checked', String(theme !== 'dark'));
+      await page.keyboard.press('Enter');
+      await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
+    });
   });
 
   test(`restores a saved ${theme} preference on a direct details link`, async ({ page }) => {

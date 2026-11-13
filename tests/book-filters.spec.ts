@@ -1,4 +1,39 @@
 import { apiUrl, booksResponse, expect, firstBook, secondBook, test } from './fixtures/books';
+import { mockBooksPages } from './fixtures/books';
+import { BooksPage } from './pages/books.page';
+
+test.describe('Collection filter journeys', () => {
+  test('combines title and publisher filters, sorts visible results and restores the collection', async ({ page }) => {
+    const books = new BooksPage(page);
+    const alpha = { ...firstBook, id: 'alpha', title: 'Guide Alpha', publisher: 'Selected Press' };
+    const zulu = { ...secondBook, id: 'zulu', title: 'Guide Zulu', publisher: 'Selected Press' };
+    const other = { ...firstBook, id: 'other', title: 'Guide Other', publisher: 'Other Press' };
+    await test.step('Given books from two publishers', async () => {
+      await mockBooksPages(page, [alpha, zulu, other]);
+      await books.goto();
+      await expect(books.titleLinks).toHaveText([alpha.title, zulu.title, other.title]);
+    });
+    await test.step('When combining title, publisher and descending title order', async () => {
+      await books.searchByTitle('Guide');
+      await books.filters.publisher.fill('Selected');
+      await books.filters.sort.selectOption('title-desc');
+    });
+    await test.step('Then only matching books appear in descending order', async () => {
+      await expect(books.titleLinks).toHaveText([zulu.title, alpha.title]);
+    });
+    await test.step('When resetting all filters', async () => {
+      await books.filters.reset();
+    });
+    await test.step('Then the original collection and controls are restored', async () => {
+      await expect(books.titleLinks).toHaveText([alpha.title, zulu.title, other.title]);
+      await expect(books.filters.search).toHaveValue('');
+      await expect(books.filters.publisher).toHaveValue('');
+      await expect(books.filters.field).toHaveValue('all');
+      await expect(books.filters.sort).toHaveValue('default');
+      await expect(books.filters.resetButton).toBeDisabled();
+    });
+  });
+});
 
 for (const field of ['title', 'author', 'isbn']) {
   test(`searches only the selected ${field} field and escapes literal input`, async ({ page }) => {

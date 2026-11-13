@@ -1,6 +1,83 @@
 import type { Page } from '@playwright/test';
 import type { Book } from '../src/app/books/book';
 import { apiUrl, booksResponse, expect, firstBook, secondBook, test } from './fixtures/books';
+import { BooksPage } from './pages/books.page';
+
+test.describe('Book collection user journeys', () => {
+  test('Given books exist, When opening the collection, Then their titles are visible', async ({ page }) => {
+    const books = new BooksPage(page);
+    await test.step('Given two books in the mocked collection', async () => {
+      await books.goto();
+    });
+    await test.step('When the collection is displayed', async () => {
+      await expect(books.heading).toBeVisible();
+    });
+    await test.step('Then both books can be opened', async () => {
+      await expect(books.bookLink(firstBook.title)).toHaveText(firstBook.title);
+      await expect(books.bookLink(firstBook.title)).toBeVisible();
+      await expect(books.bookLink(secondBook.title)).toBeVisible();
+    });
+  });
+
+  for (const clearWith of ['button', 'empty input'] as const) {
+    test(`Given a title search, When clearing with ${clearWith}, Then all books return`, async ({ page }) => {
+      const books = new BooksPage(page);
+      await test.step('Given a loaded collection with two books', async () => {
+        await books.goto();
+        await expect(books.bookLink(firstBook.title)).toBeVisible();
+        await expect(books.bookLink(secondBook.title)).toBeVisible();
+      });
+      await test.step('When searching by title', async () => {
+        await books.searchByTitle('Angular');
+      });
+      await test.step('Then only the matching title is visible', async () => {
+        await expect(books.bookLink(firstBook.title)).toBeVisible();
+        await expect(books.bookLink(secondBook.title)).toHaveCount(0);
+      });
+      await test.step(`When clearing the search with ${clearWith}`, async () => {
+        if (clearWith === 'button') await books.clearSearch();
+        else await books.searchInput.fill('');
+      });
+      await test.step('Then the complete collection returns', async () => {
+        await expect(books.searchInput).toHaveValue('');
+        await expect(books.bookLink(firstBook.title)).toBeVisible();
+        await expect(books.bookLink(secondBook.title)).toBeVisible();
+        await expect(page.getByRole('alert')).toHaveCount(0);
+      });
+    });
+  }
+
+  test('Given a collection, When opening a title, Then its details are shown', async ({ page }) => {
+    const books = new BooksPage(page);
+    await test.step('Given a loaded collection', async () => {
+      await books.goto();
+      await expect(books.bookLink(firstBook.title)).toBeVisible();
+    });
+    await test.step('When opening the first title', async () => {
+      await books.openBook(firstBook.title);
+    });
+    await test.step('Then the matching details route and title are displayed', async () => {
+      await expect(page).toHaveURL(`/books/${firstBook.id}`);
+      await expect(page.getByRole('heading', { name: firstBook.title, exact: true })).toBeVisible();
+    });
+  });
+
+  test('Given a collection, When choosing Add book, Then the creation form opens', async ({ page }) => {
+    const books = new BooksPage(page);
+    await test.step('Given the collection page', async () => {
+      await books.goto();
+      await expect(books.heading).toBeVisible();
+    });
+    await test.step('When choosing Add book', async () => {
+      await books.addBook();
+    });
+    await test.step('Then the creation route and form are displayed', async () => {
+      await expect(page).toHaveURL('/books/new');
+      await expect(page.getByRole('textbox', { name: 'Title *', exact: true })).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'Title *', exact: true })).toHaveValue('');
+    });
+  });
+});
 
 const listRequest = (url: string) => url.startsWith(`${apiUrl}?`);
 

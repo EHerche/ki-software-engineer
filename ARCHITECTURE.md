@@ -166,6 +166,26 @@ The [Auto-Fix workflow](.github/workflows/auto-fix.yml) listens for completed Bu
 - Playwright browsers are provisioned under ignored `tmp/playwright-browsers`. In PowerShell set `$env:PLAYWRIGHT_BROWSERS_PATH='D:\ki-software-engineer\tmp\playwright-browsers'` before running tests against this cache. Browser-download network access required an approved sandbox escalation; Firefox/WebKit tests also required approved elevated execution after sandboxed Firefox launch stalled.
 - All 75 application regression cases pass (25 each in Chromium, Firefox and WebKit). Strict test TypeScript checking, targeted formatting and documentation links also pass. Detailed results and diff review are recorded in [REFACTORING.md](REFACTORING.md). Tests mock the backend and do not establish the live API contract or deployment behavior.
 
+## Playwright whole-app UI workflow
+
+Task 4 UI test conventions are scoped to `tests/**` in [tests/AGENTS.md](tests/AGENTS.md).
+[The test guide](tests/README.md) maps all current routes and UI features to specs
+and composed page objects. User journeys across collection, details, creation,
+editing, filters, pagination, preview, roulette and themes use native
+Given/When/Then report steps alongside the existing technical regressions.
+[Lifecycle tests](tests/book-lifecycle.spec.ts) exercise create, read, edit, reload,
+search and reopening in both themes using a per-test stateful HTTP mock.
+`npm run test:e2e` runs the application suite in Chromium with two workers;
+`npm run test:e2e:report` opens its HTML report and `npm run test:e2e:types` checks
+test TypeScript. The external `example.spec.ts`
+starter demo is excluded from discovery. Firefox and WebKit remain available in
+the configuration but are not run for this task.
+
+Whole-app validation on 2026-11-13: all **153 Chromium cases pass** with two workers,
+no retries, failures or skips. The complete run took 50.9 seconds. The HTML report
+was inspected for all ten application specs. The run outside the Windows sandbox
+completed server teardown normally; no application source or dependencies changed.
+
 ## Reading-room theme validation
 
 Theme behavior is covered by `tests/theme.spec.ts` using mocked API responses, alongside the existing list/details suites. The palette covers both screens, cover fallbacks, and request states. Use desktop and 375px mobile checks for both themes. Remote font links were removed as part of the system-font design, eliminating the previous Google Fonts production-build dependency.

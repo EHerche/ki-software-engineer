@@ -1,7 +1,9 @@
+import { BookDetailsPage } from './pages/book-details.page';
 import type { Page } from '@playwright/test';
 import type { Book } from '../src/app/books/book';
 import type { BookChanges } from '../src/app/books/book-api-client.service';
 import { apiUrl, booksResponse, expect, firstBook, secondBook, test } from './fixtures/books';
+import { BookForm } from './pages/book-form.page';
 
 const updatedFields: BookChanges = {
   title: 'Updated Angular',
@@ -24,38 +26,39 @@ async function openEditor(page: Page): Promise<void> {
 }
 
 async function fillChanges(page: Page): Promise<void> {
-  for (const [label, value] of [
-    ['Title *', updatedFields.title],
-    ['Subtitle', updatedFields.subtitle!],
-    ['Author', updatedFields.author],
-    ['Publisher *', updatedFields.publisher],
-    ['Pages', String(updatedFields.numPages)],
-    ['Price', updatedFields.price],
-    ['Cover URL', updatedFields.cover],
-    ['Description *', updatedFields.abstract]
-  ]) {
-    await page.getByLabel(label, { exact: true }).fill(value);
-  }
+  await new BookForm(page, 'edit').fill(updatedFields);
 }
 
 test('prefills all eight editable fields and shows the protected ISBN', async ({ page }) => {
-  await openEditor(page);
-  for (const [label, value] of [
-    ['Title *', firstBook.title],
-    ['Subtitle', firstBook.subtitle!],
-    ['Author', firstBook.author],
-    ['Publisher *', firstBook.publisher],
-    ['Pages', String(firstBook.numPages)],
-    ['Price', firstBook.price],
-    ['Cover URL', firstBook.cover],
-    ['Description *', firstBook.abstract],
-    ['ISBN (read-only)', firstBook.isbn]
-  ]) {
-    await expect(page.getByLabel(label, { exact: true })).toHaveValue(value);
-  }
-  await expect(page.getByLabel('ISBN (read-only)')).toHaveAttribute('readonly', '');
-  await expect(page.locator('input[name="id"], input[name="userId"]')).toHaveCount(0);
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  const details = new BookDetailsPage(page);
+  await test.step('Given an existing book', async () => {
+    await details.goto(firstBook.id);
+    await expect(details.heading).toHaveText(firstBook.title);
+  });
+  await test.step('When opening its editor with the keyboard', async () => {
+    await details.editButton.focus();
+    await page.keyboard.press('Enter');
+    await expect(details.editor.heading).toBeVisible();
+    await expect(details.editor.field('title')).toBeFocused();
+  });
+  await test.step('Then every field is prefilled and identity is protected', async () => {
+    for (const [label, value] of [
+      ['Title *', firstBook.title],
+      ['Subtitle', firstBook.subtitle!],
+      ['Author', firstBook.author],
+      ['Publisher *', firstBook.publisher],
+      ['Pages', String(firstBook.numPages)],
+      ['Price', firstBook.price],
+      ['Cover URL', firstBook.cover],
+      ['Description *', firstBook.abstract],
+      ['ISBN (read-only)', firstBook.isbn]
+    ]) {
+      await expect(page.getByLabel(label, { exact: true })).toHaveValue(value);
+    }
+    await expect(page.getByLabel('ISBN (read-only)')).toHaveAttribute('readonly', '');
+    await expect(page.locator('input[name="id"], input[name="userId"]')).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  });
 });
 
 test('saves every editable field with original ISBN and IDs and retains the changes on reload and in the collection', async ({

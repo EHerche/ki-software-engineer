@@ -1,4 +1,6 @@
 import type { Page } from '@playwright/test';
+import { BooksPage } from './pages/books.page';
+import { BookDetailsPage } from './pages/book-details.page';
 import {
   apiUrl,
   booksResponse,
@@ -13,6 +15,36 @@ import {
 const surprise = (page: Page) => page.getByRole('button', { name: 'Überrasche mich!', exact: true });
 const draw = (page: Page) => page.getByRole('button', { name: 'Zieh eins!', exact: true });
 const reroll = (page: Page) => page.getByRole('button', { name: 'Das Schicksal herausfordern', exact: true });
+
+test.describe('Roulette navigation journey', () => {
+  test('opens the drawn book and returns to the same filters', async ({ page }) => {
+    const books = new BooksPage(page);
+    const details = new BookDetailsPage(page);
+    await test.step('Given one title-matching candidate', async () => {
+      await page.goto('/?searchText=Angular&searchField=title');
+      await expect(books.titleLinks).toHaveText([firstBook.title]);
+    });
+    await test.step('When drawing without animation', async () => {
+      await books.roulette.draw();
+    });
+    await test.step('Then the result preview contains the matching book', async () => {
+      await expect(books.preview.heading).toHaveText(firstBook.title);
+      await expect(books.preview.rerollButton).toBeVisible();
+    });
+    await test.step('When continuing to details and returning', async () => {
+      await books.preview.openDetails();
+      await expect(details.heading).toHaveText(firstBook.title);
+      await details.back();
+    });
+    await test.step('Then the filters remain and the preview is closed', async () => {
+      await expect(page).toHaveURL('/?searchText=Angular&searchField=title');
+      await expect(books.filters.search).toHaveValue('Angular');
+      await expect(books.filters.field).toHaveValue('title');
+      await expect(books.titleLinks).toHaveText([firstBook.title]);
+      await expect(books.preview.dialog).toHaveCount(0);
+    });
+  });
+});
 
 for (const animate of [false, true]) {
   test(`AC-30 / all filtered pages are candidates in ${animate ? 'animated' : 'direct'} mode`, async ({ page }) => {

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { apiUrl, expect, test } from './fixtures/books';
+import { BookCreatePage } from './pages/book-form.page';
 
 const draft = {
   isbn: 'draft-isbn',
@@ -26,34 +27,42 @@ const labels = {
 const saved = { ...draft, id: 'server-returned-id' };
 
 async function fillDraft(page: Page): Promise<void> {
-  for (const key of Object.keys(labels) as (keyof typeof labels)[]) {
-    await page.getByLabel(labels[key], { exact: true }).fill(String(draft[key]));
-  }
+  await new BookCreatePage(page).fillDraft(draft);
 }
 
 async function mockCreatedDetails(page: Page): Promise<void> {
   await page.route(`${apiUrl}/${saved.id}`, route => route.fulfill({ json: saved }));
 }
 
-for (const entry of ['collection', 'deep link']) {
-  test(`AC-7 / Anlage per ${entry}`, async ({ page }) => {
-    let newGets = 0;
-    page.on('request', request => {
-      if (request.method() === 'GET' && request.url() === `${apiUrl}/new`) newGets++;
+test.describe('Creation entry journeys', () => {
+  for (const entry of ['collection', 'deep link']) {
+    test(`AC-7 / Anlage per ${entry}`, async ({ page }) => {
+      const create = new BookCreatePage(page);
+      let newGets = 0;
+      await test.step('Given a mocked API and a fresh page', async () => {
+        page.on('request', request => {
+          if (request.method() === 'GET' && request.url() === `${apiUrl}/new`) newGets++;
+        });
+      });
+      await test.step('When opening the creation form', async () => {
+        if (entry === 'collection') {
+          await page.goto('/');
+          await page.getByRole('link', { name: 'Add book', exact: true }).focus();
+          await page.keyboard.press('Enter');
+        } else await create.goto();
+      });
+      await test.step('Then the form is empty with no identity fields or details request', async () => {
+        await expect(create.heading).toBeVisible();
+        await expect(page).toHaveURL('/books/new');
+        for (const label of Object.values(labels))
+          await expect(page.getByLabel(label, { exact: true })).toHaveValue('');
+        await expect(create.isbn).toBeEditable();
+        await expect(page.locator('input[name="id"], input[name="userId"]')).toHaveCount(0);
+        expect(newGets).toBe(0);
+      });
     });
-    if (entry === 'collection') {
-      await page.goto('/');
-      await page.getByRole('link', { name: 'Add book', exact: true }).focus();
-      await page.keyboard.press('Enter');
-    } else await page.goto('/books/new');
-    await expect(page.getByRole('heading', { name: 'Add book', exact: true })).toBeVisible();
-    await expect(page).toHaveURL('/books/new');
-    for (const label of Object.values(labels)) await expect(page.getByLabel(label, { exact: true })).toHaveValue('');
-    await expect(page.getByLabel('ISBN *', { exact: true })).toBeEditable();
-    await expect(page.locator('input[name="id"], input[name="userId"]')).toHaveCount(0);
-    expect(newGets).toBe(0);
-  });
-}
+  }
+});
 
 test('AC-8 / Anlage speichert und öffnet Ergebnis', async ({ page }) => {
   let stored: typeof saved | undefined;
