@@ -128,7 +128,7 @@ Commands are defined by [package.json](package.json), [angular.json](angular.jso
 | `npm run build`                                                          | `ng build`, defaults to production; output hashing and size budgets enabled                                      |
 | `npx ng build --configuration development`                               | Development build: optimization/license extraction disabled, source maps enabled                                 |
 | `npm run watch`                                                          | Development build in watch mode; does not start a web server                                                     |
-| `npm test`                                                               | Karma builder; currently incomplete dependencies (see below)                                                     |
+| `npm test`                                                               | Vitest unit/component tests in jsdom, single run, two workers                                                     |
 | `npx playwright test`                                                    | Starts/reuses the frontend server, then runs `tests/` in Chromium, Firefox and WebKit; browser binaries required |
 | `npx playwright test tests/book-details.spec.ts tests/book-list.spec.ts` | Runs application regressions only, with mocked API responses                                                     |
 | `npx playwright test --list`                                             | Lists tests without running browsers or starting the server                                                      |
@@ -136,7 +136,7 @@ Commands are defined by [package.json](package.json), [angular.json](angular.jso
 
 Production budgets are 500 kB warning / 1 MB error for initial bundles, and 4 kB / 8 kB for any component stylesheet. The development build produced browser artifacts under `dist/angular-workshop-modern/browser/`; no output path is explicitly set in Angular configuration. The [Build workflow](.github/workflows/ci.yml) runs `npm ci` and the production build on pull requests, pushes to `main`, and manual dispatches, using Ubuntu 24.04 and Node 20 with an npm cache. PR builds check out the PR head commit so their logs match the commit used by Auto-Fix. There is no container, hosting configuration, deploy command, or deployment procedure. **Inference:** static hosting would need to serve browser artifacts and resolve client routes to `index.html`; the actual hosting arrangement is unknown.
 
-Application regression coverage is in [details tests](tests/book-details.spec.ts), [list tests](tests/book-list.spec.ts), [editing tests](tests/book-edit.spec.ts), [creation tests](tests/book-create.spec.ts), and [theme tests](tests/theme.spec.ts), with shared books, image responses, and API routes in [the fixture](tests/fixtures/books.ts). They exercise the local app with mocked HTTP, requiring no live backend. Editing and creation tests use per-test stateful PUT/POST and GET mocks to check saved values after reload/navigation. The collection fixture only answers GET; unconfigured mutations return 405 rather than receiving a collection response. List timing/cancellation tests use Playwright clock control; the reused-cover input contract test uses Angular's development-only debug API to change the parent card input without recreating the cover. Existing [starter tests](tests/example.spec.ts) target playwright.dev; the [TodoMVC sample](tests-examples/demo-todo-app.spec.ts) is outside `testDir`. CI-sensitive retries/workers/`forbidOnly` are configured, but the Build workflow currently runs compilation only; it does not run Playwright or the legacy Karma suite. The legacy Karma target references Jasmine types, yet there are no source unit specs or locked Karma/Jasmine packages.
+Application regression coverage is in [details tests](tests/book-details.spec.ts), [list tests](tests/book-list.spec.ts), [editing tests](tests/book-edit.spec.ts), [creation tests](tests/book-create.spec.ts), and [theme tests](tests/theme.spec.ts), with shared books, image responses, and API routes in [the fixture](tests/fixtures/books.ts). They exercise the local app with mocked HTTP, requiring no live backend. Editing and creation tests use per-test stateful PUT/POST and GET mocks to check saved values after reload/navigation. The collection fixture only answers GET; unconfigured mutations return 405 rather than receiving a collection response. List timing/cancellation tests use Playwright clock control; the reused-cover input contract test uses Angular's development-only debug API to change the parent card input without recreating the cover. Existing [starter tests](tests/example.spec.ts) target playwright.dev; the [TodoMVC sample](tests-examples/demo-todo-app.spec.ts) is outside `testDir`. CI-sensitive retries/workers/`forbidOnly` are configured, but the Build workflow currently runs compilation only; it does not run Playwright or Vitest. The former incomplete Karma target has been replaced by the Angular 21 Vitest builder; see the test-level guide below.
 
 [recreate-tags.sh](recreate-tags.sh) deletes matching local tags, rebuilds solution tags from commit messages, and deletes/pushes corresponding remote tags. It is a repository maintenance script with remote effects, not a normal contributor setup command.
 
@@ -146,7 +146,7 @@ The [Auto-Fix workflow](.github/workflows/auto-fix.yml) listens for completed Bu
 
 - Read the scoped [root agent guide](AGENTS.md), [source guide](src/AGENTS.md), and [books guide](src/app/books/AGENTS.md). Start with routes, screen state streams, the API client and `Book` interface for book behavior. Keep HTTP construction in the client and rendering in input-driven components.
 - Add lazy feature routes in [app.routes.ts](src/app/app.routes.ts) and import template dependencies in the consuming standalone component. Follow the existing signal-based presentation state and RxJS request orchestration; installed store/query packages are unused.
-- Follow [strict TypeScript/Angular template settings](tsconfig.json). There are no custom path aliases. Application compilation [excludes spec files](tsconfig.app.json); the spec configuration includes all source TS and requests Jasmine types.
+- Follow [strict TypeScript/Angular template settings](tsconfig.json). There are no custom path aliases. Application compilation [excludes spec files](tsconfig.app.json); the spec configuration includes unit/component specs and uses Vitest/Node types.
 - Follow [.prettierrc](.prettierrc) and [.editorconfig](.editorconfig): two spaces, single quotes, semicolons, no trailing commas, Prettier width 120 and LF. No lint script/configuration is present. [VS Code recommendations](.vscode/extensions.json) cover Angular Language Service and Prettier.
 - For manual checks, exercise list load/search/clear/empty/error/retry, details deep links/404/retry, browser history, image fallback, keyboard navigation and mobile layout. Run the targeted application Playwright suites for regression coverage.
 - For editing, also check required-field errors/correction, immutable ISBN/IDs, saving/reload, Cancel, retry after save failure, and navigation during a pending save. Include `tests/book-edit.spec.ts` and `tests/theme.spec.ts` in application regression runs.
@@ -155,7 +155,7 @@ The [Auto-Fix workflow](.github/workflows/auto-fix.yml) listens for completed Bu
 
 **Code-derived limitations:** changing `pageSize` alone does not reload; its current value is used on the next action. The API targets localhost. Book fields remain statically typed; paging metadata is checked at runtime. Roulette has no server snapshot, so concurrent external mutations can shift records between pages. The original search race/timer issues are documented in [REFACTORING.md](REFACTORING.md).
 
-**Unsettled architecture:** unused state/query/server dependencies and the unused toast wrapper may be workshop preparation or leftovers; their intended role cannot be determined. The missing unit-test dependencies, lack of environment configuration, and absent deployment instructions should be resolved before relying on this as a production baseline. Whether any backend enforces access control remains unknown.
+**Unsettled architecture:** unused state/query/server dependencies and the unused toast wrapper may be workshop preparation or leftovers; their intended role cannot be determined. The lack of environment configuration and absent deployment instructions should be resolved before relying on this as a production baseline. Whether any backend enforces access control remains unknown.
 
 **Validation for the refactor:**
 
@@ -165,6 +165,30 @@ The [Auto-Fix workflow](.github/workflows/auto-fix.yml) listens for completed Bu
 - The legacy test command fails with `Cannot find module 'karma-jasmine'`; repairing it is outside this refactor.
 - Playwright browsers are provisioned under ignored `tmp/playwright-browsers`. In PowerShell set `$env:PLAYWRIGHT_BROWSERS_PATH='D:\ki-software-engineer\tmp\playwright-browsers'` before running tests against this cache. Browser-download network access required an approved sandbox escalation; Firefox/WebKit tests also required approved elevated execution after sandboxed Firefox launch stalled.
 - All 75 application regression cases pass (25 each in Chromium, Firefox and WebKit). Strict test TypeScript checking, targeted formatting and documentation links also pass. Detailed results and diff review are recorded in [REFACTORING.md](REFACTORING.md). Tests mock the backend and do not establish the live API contract or deployment behavior.
+
+## Unit and component test workflow
+
+[The test-level guide](docs/testing.md) distinguishes 56 isolated function/service
+unit cases, 29 Angular component cases and the 153 mocked-API UI cases.
+`npm test` now uses `@angular/build:unit-test`, Vitest 4.1.12 and jsdom 27.4.0
+with two workers, replacing the former unconfigured Karma target. `test:unit`
+and `test:components` select the corresponding `src/**/*.unit.spec.ts` and
+`src/**/*.component.spec.ts` files; `test:watch` watches both groups.
+
+Unit specs cover collection query normalization, required-text validation and
+BookApiClient via HttpTestingController. Component specs render the real cover,
+pagination, item, preview and shared form templates in TestBed. Fixtures and DOM
+helpers are in `test-support/`, independent from Playwright. The spec config uses
+Vitest types; application compilation still excludes specs. No application source
+behavior changed. The test builder inherits the application's zone polyfill and
+initializes the Angular test environment. jsdom does not validate real browser
+layout, and HTTP testing does not validate the live backend.
+
+Verified on 2026-11-13: all 85 Vitest cases pass (56 unit / 29 component, eight
+files), both selection commands pass, development and production builds pass
+(production initial bundle 387.60 kB). Historical Karma blockers in the dated
+validation records below describe earlier repository states and are now resolved
+by this explicit test-infrastructure task.
 
 ## Playwright whole-app UI workflow
 

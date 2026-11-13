@@ -12,7 +12,10 @@ Instructions in `src/AGENTS.md` apply to source changes; `src/app/books/AGENTS.m
 - `node node_modules/@angular/cli/bin/ng.js build --configuration development`: development compilation.
 - `npx playwright test tests/book-details.spec.ts tests/book-list.spec.ts`: application regression tests across configured browsers.
 - `npx prettier --check <changed-files>`: targeted formatting check. Format only changed files.
-- `npm test`: legacy Karma target; currently missing `karma-jasmine`. Do not claim this suite passes.
+- `npm test`: all Vitest unit and Angular component tests, once, in jsdom (two workers).
+- `npm run test:unit` / `npm run test:components`: run the two test levels separately; `npm run test:watch` watches both.
+- `npm run test:e2e`: Playwright UI tests in Chromium with two workers. Keep Firefox/WebKit excluded unless requested.
+- See [docs/testing.md](docs/testing.md) for test naming, scope and commands. Specs remain excluded from the application build.
 
 Do not run `recreate-tags.sh` as a development or validation step: it deletes and pushes tags.
 

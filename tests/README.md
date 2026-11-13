@@ -117,8 +117,9 @@ node node_modules/@playwright/test/cli.js test tests/book-lifecycle.spec.ts --pr
 - Firefox und WebKit sind weiterhin konfiguriert, aber in diesem Auftrag
   ungetestet. `npm run test:e2e` beschränkt die Ausführung ausdrücklich auf
   Chromium. Der rohe Befehl `playwright test` würde alle Projekte auswählen.
-- Diese Erweiterung fügt keinen CI-Testjob hinzu. `npm test` ist weiterhin die
-  separate, unvollständig eingerichtete Legacy-Karma-Suite.
+- Diese Erweiterung fügt keinen CI-Testjob hinzu. `npm test` führt die separate
+  Vitest-Suite mit Unit- und Angular-Komponententests aus. Die Trennung und Befehle
+  stehen in [docs/testing.md](../docs/testing.md).
 - Auf dem Windows-Rechner hing zuvor der Serverabbau innerhalb der Sandbox. Der
   vollständige Whole-App-Lauf wurde deshalb außerhalb der Sandbox ausgeführt und
   beendete Testserver und Report regulär.
