@@ -26,7 +26,14 @@ describe('Unit: collection URL context', () => {
   });
 
   it('preserves valid criteria while excluding unrelated or unsafe return parameters', () => {
-    const context = { ...defaults, page: 3, searchText: 'A & B', searchField: 'title', publisher: 'Press', sort: 'pages-desc' } as const;
+    const context = {
+      ...defaults,
+      page: 3,
+      searchText: 'A & B',
+      searchField: 'title',
+      publisher: 'Press',
+      sort: 'pages-desc'
+    } as const;
     const params = { ...collectionParams(context), returnUrl: 'https://example.invalid', extra: 'ignored' };
     expect(readCollectionContext(convertToParamMap(params))).toEqual(context);
     expect(collectionParams(readCollectionContext(convertToParamMap(params)))).toEqual(collectionParams(context));
@@ -34,8 +41,9 @@ describe('Unit: collection URL context', () => {
   });
 
   it('normalizes unsupported fields and sorts without dropping search text', () => {
-    expect(readCollectionContext(convertToParamMap({ searchField: 'cover', sort: 'random', searchText: 'Book' })))
-      .toEqual({ ...defaults, searchText: 'Book' });
+    expect(
+      readCollectionContext(convertToParamMap({ searchField: 'cover', sort: 'random', searchText: 'Book' }))
+    ).toEqual({ ...defaults, searchText: 'Book' });
   });
 
   it.each(['title', 'author', 'isbn'])('retains supported search field %s', searchField => {

@@ -31,7 +31,9 @@ describe('Unit: BookApiClient with an isolated HTTP backend', () => {
   });
 
   it('trims full-text search and omits blank publisher and default sorting', async () => {
-    const response = firstValueFrom(client.getBooks(5, ' Angular ', { field: 'all', publisher: '  ', sort: 'default' }));
+    const response = firstValueFrom(
+      client.getBooks(5, ' Angular ', { field: 'all', publisher: '  ', sort: 'default' })
+    );
     const request = http.expectOne(request => request.url === apiUrl);
     expect(request.request.params.keys()).toEqual(['_limit', 'q']);
     expect(request.request.params.get('_limit')).toBe('5');
@@ -40,15 +42,20 @@ describe('Unit: BookApiClient with an isolated HTTP backend', () => {
     expect(await response).toEqual([]);
   });
 
-  it.each(['title', 'author', 'isbn'] as BookSearchField[])('escapes literal %s and publisher searches', async field => {
-    const response = firstValueFrom(client.getBooks(10, ' Ada [Reader]. ', { field, publisher: ' Press (A) ', sort: 'default' }));
-    const request = http.expectOne(request => request.url === apiUrl);
-    expect(request.request.params.get(`${field}_like`)).toBe('Ada \\[Reader\\]\\.');
-    expect(request.request.params.get('publisher_like')).toBe('Press \\(A\\)');
-    expect(request.request.params.has('q')).toBe(false);
-    request.flush([]);
-    await response;
-  });
+  it.each(['title', 'author', 'isbn'] as BookSearchField[])(
+    'escapes literal %s and publisher searches',
+    async field => {
+      const response = firstValueFrom(
+        client.getBooks(10, ' Ada [Reader]. ', { field, publisher: ' Press (A) ', sort: 'default' })
+      );
+      const request = http.expectOne(request => request.url === apiUrl);
+      expect(request.request.params.get(`${field}_like`)).toBe('Ada \\[Reader\\]\\.');
+      expect(request.request.params.get('publisher_like')).toBe('Press \\(A\\)');
+      expect(request.request.params.has('q')).toBe(false);
+      request.flush([]);
+      await response;
+    }
+  );
 
   it.each([
     ['title-asc', 'title', 'asc'],
@@ -115,7 +122,11 @@ describe('Unit: BookApiClient with an isolated HTTP backend', () => {
     const original = { ...sampleBook, serverMetadata: 'keep me' };
     const { isbn: _isbn, ...editable } = sampleDraft;
     const changes: BookChanges & { id: string; isbn: string; userId: number } = {
-      ...editable, title: 'Revised', id: 'tampered', isbn: 'tampered', userId: 99
+      ...editable,
+      title: 'Revised',
+      id: 'tampered',
+      isbn: 'tampered',
+      userId: 99
     };
     const response = firstValueFrom(client.updateBook(original, changes));
     const request = http.expectOne(`${apiUrl}/${sampleBook.id}`);
