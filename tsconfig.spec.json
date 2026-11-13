@@ -4,11 +4,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": [
-      "jasmine"
-    ]
+    "types": ["vitest/globals", "node"]
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.unit.spec.ts",
+    "src/**/*.component.spec.ts"
   ]
 }

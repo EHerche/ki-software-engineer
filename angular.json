@@ -64,17 +64,12 @@
           "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": ["src/styles.css"]
+            "runner": "vitest",
+            "runnerConfig": "vitest.config.ts",
+            "include": ["src/**/*.unit.spec.ts", "src/**/*.component.spec.ts"]
           }
         }
       }
